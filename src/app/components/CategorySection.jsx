@@ -1,0 +1,84 @@
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+
+const categoryImages = {
+  "Coconut": "/images/explore/coconut.png",
+  "Fresh Vegetables": "/images/explore/fresh-vegetables.png",
+  "Fresh Fruits": "/images/explore/fresh-fruits.png",
+  "Milk Products": "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
+  "Ghee & Oils": "/images/explore/oil.png",
+  "Country Specials": "https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
+  "Eggs": "https://images.unsplash.com/photo-1587486913049-53fc88980cfc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
+  "Pulses": "/images/explore/pulses.png",
+  "Dry Fruits": "/images/explore/dry-fruits.png",
+  "Breads": "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80",
+  "Cereals": "/images/explore/cereals.png",
+  "Salt & Sugar": "/images/explore/suger.png",
+  "Spices": "/images/explore/spices.png",
+  "Atta & Rice": "/images/explore/rice.png"
+};
+
+const CategoryItem = ({ name, imageUrl }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div className="relative">
+      <div
+        className="flex flex-col items-center justify-start space-y-2 cursor-pointer group"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="w-30 h-30 rounded-full bg-gray-100 flex items-center justify-center
+                       group-hover:bg-gray-200 transition-all duration-300 border border-gray-200
+                       overflow-hidden transform group-hover:scale-105">
+          <Image
+            src={imageUrl}
+            alt={name}
+            width={80}
+            height={80}
+            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+            unoptimized
+          />
+        </div>
+        <span className="text-xs font-medium text-gray-700 text-center max-w-[80px]">
+          {name.split(' ').map((word, i) => (
+            <span key={i} className="block">{word}</span>
+          ))}
+        </span>
+      </div>
+
+      {isHovered && (
+        <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 -translate-y-2 mb-2 w-40">
+          <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-200 animate-popup">
+            <p className="text-sm font-medium text-center">{name}</p>
+            <div className="w-3 h-3 bg-white absolute -bottom-1 left-1/2 transform -translate-x-1/2 rotate-45 border-r border-b border-gray-200"></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CategorySection = () => {
+  const categories = Object.keys(categoryImages);
+
+  return (
+    <div id='products' className="container mx-auto px-4 py-6 pl-20 pr-20">
+      <h1 className="text-xl font-bold mb-6 text-center">Explore Categories</h1>
+     
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
+        {categories.map((category, index) => (
+          <CategoryItem
+            key={index}
+            name={category}
+            imageUrl={categoryImages[category]}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default CategorySection;
