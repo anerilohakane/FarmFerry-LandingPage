@@ -39,13 +39,13 @@ const Banner = () => {
 
           {/* Bottom Half: Text Content */}
           <div className="p-5 text-center space-y-1">
-            <h1 className="text-xl font-extrabold">Free VIP Membership Trial!</h1>
+            <h1 className="text-xl font-extrabold text-black">Free VIP Membership Trial!</h1>
             
             <div className="text-center space-y-2 pl-4">
-              <p className="text-xl font-extrabold">- Up to 40% Off!</p>
+              <p className="text-xl font-extrabold text-black">- Up to 40% Off!</p>
             </div>
 
-            <p className="text-sm font-medium">
+            <p className="text-sm font-medium text-black">
               Instant delivery with no Fees.<br />
               No minimum order Required!
             </p>

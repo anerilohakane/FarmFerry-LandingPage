@@ -198,14 +198,16 @@ export default function Contact() {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none text-gray-900"
                     required
                   >
-                    <option value="" disabled className="text-black-400">Select partnership type</option>
-                    <option value="Farm Supplier Partnership" className="text-black">Farm Supplier Partnership</option>
-                    <option value="Distribution Partnership" className="text-black">Distribution Partnership</option>
-                    <option value="Investor Inquiry" className="text-black">Investor Inquiry</option>
-                    <option value="Other Partnership Opportunity" className="text-black">Other Partnership Opportunity</option>
+                    <option value="" disabled className="text-gray-400">
+                      Select partnership type
+                    </option>
+                    <option value="Farm Supplier Partnership">Farm Supplier Partnership</option>
+                    <option value="Distribution Partnership">Distribution Partnership</option>
+                    <option value="Investor Inquiry">Investor Inquiry</option>
+                    <option value="Other Partnership Opportunity">Other Partnership Opportunity</option>
                   </select>
                 </div>
 
