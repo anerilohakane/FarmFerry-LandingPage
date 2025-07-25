@@ -9,18 +9,30 @@ export async function POST(req) {
       return new Response(JSON.stringify({ success: false, message: 'All fields are required' }), { status: 400 });
     }
 
+    // Check for required environment variables
+    const EMAIL_USERNAME = process.env.EMAIL_USERNAME;
+    const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
+
+    if (!EMAIL_USERNAME || !EMAIL_PASSWORD) {
+      console.error('Missing EMAIL_USERNAME or EMAIL_PASSWORD in environment variables.');
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: 'Server configuration error: email credentials are missing.' 
+      }), { status: 500 });
+    }
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
+        user: EMAIL_USERNAME,
+        pass: EMAIL_PASSWORD
       }
     });
 
     // Send email to site owner
     await transporter.sendMail({
-      from: process.env.EMAIL_USERNAME,
-      to: 'farm.ferry.225@gmail.com', // Change this to your real email
+      from: EMAIL_USERNAME,
+      to: 'farm.ferry.225@gmail.com',
       subject: `New Contact Form Submission: ${subject}`,
       html: `
         <h3>New Partner Inquiry Received</h3>
@@ -35,7 +47,7 @@ export async function POST(req) {
 
     // Send acknowledgment email to user
     await transporter.sendMail({
-      from: process.env.EMAIL_USERNAME,
+      from: EMAIL_USERNAME,
       to: email,
       subject: 'Thanks for contacting Farm Ferry!',
       html: `
