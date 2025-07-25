@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 
 const categoryImages = {
@@ -22,24 +22,42 @@ const categoryImages = {
 
 const CategoryItem = ({ name, imageUrl }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [popupPosition, setPopupPosition] = useState('bottom');
+  const itemRef = useRef(null);
+
+  useEffect(() => {
+    // Check if the item is near the top of the viewport
+    const checkPosition = () => {
+      if (itemRef.current) {
+        const rect = itemRef.current.getBoundingClientRect();
+        // If the top position is less than 150px, show popup below
+        setPopupPosition(rect.top < 150 ? 'bottom' : 'top');
+      }
+    };
+
+    checkPosition();
+    window.addEventListener('scroll', checkPosition);
+    return () => window.removeEventListener('scroll', checkPosition);
+  }, []);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={itemRef}>
       <div
         className="flex flex-col items-center justify-start space-y-2 cursor-pointer group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="w-30 h-30 rounded-full bg-gray-100 flex items-center justify-center
-                       group-hover:bg-gray-200 transition-all duration-300 border border-gray-200
+        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center
+                       group-hover:bg-gray-200 transition-all duration-200 border border-gray-200
                        overflow-hidden transform group-hover:scale-105">
           <Image
             src={imageUrl}
             alt={name}
-            width={80}
-            height={80}
-            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-            unoptimized
+            width={96}
+            height={96}
+            className="object-cover w-full h-full transition-transform duration-200 group-hover:scale-110"
+            loading="eager"
+            priority={name === "Fresh Vegetables"} // Prioritize first few images
           />
         </div>
         <span className="text-xs font-medium text-gray-700 text-center max-w-[80px]">
@@ -49,14 +67,15 @@ const CategoryItem = ({ name, imageUrl }) => {
         </span>
       </div>
 
-      {isHovered && (
-        <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 -translate-y-2 mb-2 w-40">
-          <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-200 animate-popup">
-            <p className="text-sm font-medium text-center">{name}</p>
-            <div className="w-3 h-3 bg-white absolute -bottom-1 left-1/2 transform -translate-x-1/2 rotate-45 border-r border-b border-gray-200"></div>
-          </div>
+      <div className={`absolute z-10 ${popupPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} 
+                      left-1/2 transform -translate-x-1/2 w-40 transition-opacity duration-150 
+                      ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-200">
+          <p className="text-sm font-medium text-center">{name}</p>
+          <div className={`absolute w-3 h-3 bg-white ${popupPosition === 'top' ? '-bottom-1' : '-top-1'} 
+                          left-1/2 transform -translate-x-1/2 rotate-45 border-r border-b border-gray-200`}></div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -65,13 +84,13 @@ const CategorySection = () => {
   const categories = Object.keys(categoryImages);
 
   return (
-    <div id='products' className="container mx-auto px-4 py-6 pl-20 pr-20">
+    <div id='products' className="container mx-auto px-4 py-6 md:px-20">
       <h1 className="text-xl font-bold mb-6 text-center">Explore Categories</h1>
      
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
         {categories.map((category, index) => (
           <CategoryItem
-            key={index}
+            key={category} // Using category name as key is better than index
             name={category}
             imageUrl={categoryImages[category]}
           />
