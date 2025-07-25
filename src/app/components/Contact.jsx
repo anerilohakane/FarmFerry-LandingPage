@@ -201,7 +201,7 @@ export default function Contact() {
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
                     required
                   >
-                    <option value="" disabled className="text-gray-400">Select partnership type</option>
+                    <option value="" disabled className="text-black-400">Select partnership type</option>
                     <option value="Farm Supplier Partnership" className="text-black">Farm Supplier Partnership</option>
                     <option value="Distribution Partnership" className="text-black">Distribution Partnership</option>
                     <option value="Investor Inquiry" className="text-black">Investor Inquiry</option>
