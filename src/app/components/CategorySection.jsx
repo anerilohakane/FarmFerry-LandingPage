@@ -67,11 +67,11 @@ const CategoryItem = ({ name, imageUrl }) => {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <span className="text-xs text-center">{name}</span>
+              <span className="text-xs text-center text-black">{name}</span>
             </div>
           )}
         </div>
-        <span className="text-xs font-medium text-gray-700 text-center max-w-[80px]">
+        <span className="text-xs font-medium text-black text-center max-w-[80px]">
           {name.split(' ').map((word, i) => (
             <span key={`${name}-${word}-${i}`} className="block">{word}</span>
           ))}
@@ -82,7 +82,7 @@ const CategoryItem = ({ name, imageUrl }) => {
                       left-1/2 transform -translate-x-1/2 w-40 transition-opacity duration-150 
                       ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-200">
-          <p className="text-sm font-medium text-center">{name}</p>
+          <p className="text-sm font-medium text-center text-black">{name}</p>
           <div className={`absolute w-3 h-3 bg-white ${popupPosition === 'top' ? '-bottom-1' : '-top-1'} 
                           left-1/2 transform -translate-x-1/2 rotate-45 border-r border-b border-gray-200`}></div>
         </div>
@@ -103,12 +103,12 @@ const CategorySection = () => {
   if (!isMounted) {
     return (
       <div id='products' className="container mx-auto px-4 py-6 md:px-20">
-        <h1 className="text-xl font-bold mb-6 text-center">Explore Categories</h1>
+        <h1 className="text-xl font-bold mb-6 text-center text-black">Explore Categories</h1>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
           {categories.map((category) => (
             <div key={category} className="flex flex-col items-center">
               <div className="w-24 h-24 rounded-full bg-gray-100"></div>
-              <span className="text-xs text-center mt-2">{category}</span>
+              <span className="text-xs text-center mt-2 text-black">{category}</span>
             </div>
           ))}
         </div>
@@ -118,7 +118,7 @@ const CategorySection = () => {
 
   return (
     <div id='products' className="container mx-auto px-4 py-6 md:px-20">
-      <h1 className="text-xl font-bold mb-6 text-center">Explore Categories</h1>
+      <h1 className="text-xl font-bold mb-6 text-center text-black">Explore Categories</h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
         {categories.map((category) => (
           <CategoryItem
