@@ -11,7 +11,7 @@ import Contact from './components/Contact'
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen w-full bg-[#f9f8f3]">
-      <Header />
+      {/* <Header /> */}
       <main className="flex-grow">
         <HeroSection />
         <CategorySection />
@@ -21,7 +21,7 @@ export default function Home() {
         <CTASection />
         <Contact />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

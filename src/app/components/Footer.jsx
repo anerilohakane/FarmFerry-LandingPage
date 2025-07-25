@@ -5,8 +5,9 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="container mx-auto px-4 pt-16 pb-8" id='contact'>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {/* Brand info and socials - always full width on mobile */}
+          <div className="md:col-span-1">
             <h3 className="text-2xl font-bold text-green-500 mb-4">
               Farm<span className="text-yellow-500">Ferry</span>
             </h3>
@@ -29,29 +30,32 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h4 className="text-white font-semibold mb-4">Categories</h4>
-            <ul className="space-y-2">
-              <li><a href="#" className="hover:text-green-500 transition-colors">Vegetables</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">Spices</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">Dry Fruits</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">Groceries</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">Organic</a></li>
-            </ul>
+          {/* Categories and Quick Links - side by side on small screens, stacked on medium+ */}
+          <div className="grid grid-cols-2 gap-8 md:col-span-1">
+            <div>
+              <h4 className="text-white font-semibold mb-4">Categories</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="hover:text-green-500 transition-colors">Vegetables</a></li>
+                <li><a href="#" className="hover:text-green-500 transition-colors">Spices</a></li>
+                <li><a href="#" className="hover:text-green-500 transition-colors">Dry Fruits</a></li>
+                <li><a href="#" className="hover:text-green-500 transition-colors">Groceries</a></li>
+                <li><a href="#" className="hover:text-green-500 transition-colors">Organic</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="hover:text-green-500 transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-green-500 transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-green-500 transition-colors">FAQ</a></li>
+                <li><a href="/terms" className="hover:text-green-500 transition-colors">Terms & Policy</a></li>
+              </ul>
+            </div>
           </div>
 
-          <div>
-            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2">
-              <li><a href="#" className="hover:text-green-500 transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">FAQ</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-green-500 transition-colors">Terms</a></li>
-            </ul>
-          </div>
-
-          <div>
+          {/* Contact Info - always full width on mobile */}
+          <div className="md:col-span-1">
             <h4 className="text-white font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-4">
               <li className="flex items-start">
@@ -75,11 +79,6 @@ export default function Footer() {
             <p className="mb-4 md:mb-0">
               © {new Date().getFullYear()} FarmFerry. All rights reserved.
             </p>
-            <div className="flex space-x-6">
-              <a href="#" className="text-sm hover:text-green-500 transition-colors">Privacy</a>
-              <a href="#" className="text-sm hover:text-green-500 transition-colors">Terms</a>
-              <a href="#" className="text-sm hover:text-green-500 transition-colors">Cookies</a>
-            </div>
           </div>
         </div>
       </div>
