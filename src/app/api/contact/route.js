@@ -20,7 +20,7 @@ export async function POST(req) {
     // Send email to site owner
     await transporter.sendMail({
       from: process.env.EMAIL_USERNAME,
-      to: 'shreyassutar.delxn@gmail.com', // Change this to your real email
+      to: 'farm.ferry.225@gmail.com', // Change this to your real email
       subject: `New Contact Form Submission: ${subject}`,
       html: `
         <h3>New Partner Inquiry Received</h3>
