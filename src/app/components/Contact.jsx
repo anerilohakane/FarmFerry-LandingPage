@@ -67,7 +67,7 @@ export default function Contact() {
     {
       icon: Mail,
       title: 'Email',
-      value: 'farm.ferry.225@gmail.com',
+      value: 'info@farmferry.in',
       color: 'bg-white/90'
     },
     {
