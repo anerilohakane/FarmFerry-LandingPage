@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { ShoppingCart, X, Minus, Plus, Trash } from 'lucide-react';
 import Image from 'next/image';
+import { useCart } from '../../context/CartContext';
 
 // Login Modal Component
 function LoginModal({ open, onClose }) {
@@ -103,35 +104,30 @@ const navItems = [
 ];
 
 const Navbar = () => {
-  // Cart state
-  const [cart, setCart] = useState([
-    {
-      id: 1,
-      name: 'Gokul Full Cream Milk',
-      desc: '500 ml',
-      qty: 1,
-      price: 37,
-      image: '/images/groceries/groceries-4.png',
-    },
-  ]);
-  const [cartOpen, setCartOpen] = useState(false);
+  // Cart context
+  const { 
+    cart, 
+    cartOpen, 
+    setCartOpen, 
+    increaseQty, 
+    decreaseQty, 
+    removeFromCart, 
+    getCartTotal, 
+    getCartItemCount,
+    deliveryCharges,
+    loadingCharges,
+    getDeliveryCharges,
+    getGrandTotal
+  } = useCart();
 
   // Auth/Modal state
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Cart calculations
-  const deliveryCharge = 25;
-  const handlingCharge = 2;
-  const smallCartCharge = 20;
-  const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const showSmallCartCharge = itemsTotal < 100;
-  const grandTotal = itemsTotal + deliveryCharge + handlingCharge + (showSmallCartCharge ? smallCartCharge : 0);
-
-  // Cart manipulation handlers
-  const increaseQty = id => setCart(c => c.map(item => item.id === id ? { ...item, qty: item.qty + 1 } : item));
-  const decreaseQty = id => setCart(c => c.map(item => item.id === id && item.qty > 1 ? { ...item, qty: item.qty - 1 } : item));
-  const removeItem = id => setCart(c => c.filter(item => item.id !== id));
+  // Cart calculations using dynamic charges
+  const itemsTotal = getCartTotal();
+  const charges = getDeliveryCharges();
+  const grandTotal = getGrandTotal();
 
   // Scroll To Section function
   const scrollToSection = (sectionId) => {
@@ -218,9 +214,9 @@ const Navbar = () => {
                     aria-label="Open cart"
                   >
                     <ShoppingCart size={24} />
-                    {cart.length > 0 && (
+                    {getCartItemCount() > 0 && (
                       <span className="absolute top-0 right-0 -mt-1 -mr-1 rounded-full bg-green-600 px-1 text-xs text-white font-semibold">
-                        {cart.reduce((sum, item) => sum + item.qty, 0)}
+                        {getCartItemCount()}
                       </span>
                     )}
                   </button>
@@ -247,129 +243,177 @@ const Navbar = () => {
                 <X size={24} />
               </button>
             </div>
-            {/* Delivery Info */}
-            <div className="bg-gray-50 px-6 py-5 flex items-center gap-4 rounded-xl mx-4 my-4">
-              <div className="bg-white w-12 h-12 flex items-center justify-center rounded-full shadow border">
-                <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" stroke="#4ade80" strokeWidth="2" />
-                  <path d="M12 7v5l3 2" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
-                </svg>
+            
+            {cart.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center p-6">
+                <div className="text-center">
+                  <ShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Your cart is empty</h3>
+                  <p className="text-gray-500 mb-4">Add some products to get started!</p>
+                  <button
+                    onClick={() => setCartOpen(false)}
+                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    Continue Shopping
+                  </button>
+                </div>
               </div>
-              <div>
-                <div className="text-lg font-bold text-black">Delivery in 30 minutes</div>
-                <div className="text-gray-700 text-sm">Shipment of {cart.reduce((sum, item) => sum + item.qty, 0)} item{cart.length > 1 ? 's' : ''}</div>
-              </div>
-            </div>
-            {/* Cart Items */}
-            <div className="px-4 pb-0">
-              {cart.map(item => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between bg-white py-0 mb-0 rounded-lg shadow border"
-                  style={{ minHeight: '56px' }}
-                >
-                  <div className="flex items-center gap-3">
-                    <Image
-                      src={item.image}
-                      width={88}
-                      height={48}
-                      alt={item.name}
-                      className="rounded border"
-                    />
-                    <div>
-                      <div className="font-medium text-[13px] text-gray-800">{item.name}</div>
-                      <div className="text-gray-400 text-xs">{item.desc}</div>
-                      <div className="font-bold text-green-700 text-xs mt-1">₹{item.price}</div>
+            ) : (
+              <>
+                {/* Delivery Info */}
+                <div className="bg-gray-50 px-6 py-5 flex items-center gap-4 rounded-xl mx-4 my-4">
+                  <div className="bg-white w-12 h-12 flex items-center justify-center rounded-full shadow border">
+                    <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="#4ade80" strokeWidth="2" />
+                      <path d="M12 7v5l3 2" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-black">Delivery in {deliveryCharges.deliveryTime}</div>
+                    <div className="text-gray-700 text-sm">Shipment of {getCartItemCount()} item{getCartItemCount() > 1 ? 's' : ''}</div>
+                  </div>
+                </div>
+                
+                {/* Cart Items */}
+                <div className="px-4 pb-0">
+                  {cart.map(item => (
+                    <div
+                      key={item._id}
+                      className="flex items-center justify-between bg-white py-0 mb-0 rounded-lg shadow border"
+                      style={{ minHeight: '56px' }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={item.image}
+                          width={88}
+                          height={48}
+                          alt={item.name}
+                          className="rounded border"
+                          onError={(e) => {
+                            e.target.src = '/images/explore/tomato.png';
+                          }}
+                        />
+                        <div>
+                          <div className="font-medium text-[13px] text-gray-800">{item.name}</div>
+                          <div className="text-gray-400 text-xs">{item.unit}</div>
+                          <div className="font-bold text-green-700 text-xs mt-1">
+                            ₹{item.discountedPrice || item.price}
+                            {item.discountedPrice && item.discountedPrice < item.price && (
+                              <span className="text-gray-500 line-through ml-1">₹{item.price}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center pr-1">
+                        <button
+                          onClick={() => decreaseQty(item._id)}
+                          disabled={item.qty === 1}
+                          className={`bg-green-700 w-6 h-6 flex items-center justify-center text-white rounded-l text-xs ${item.qty === 1 ? "opacity-60 cursor-not-allowed" : "hover:bg-green-800"}`}
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span className="bg-white px-2 py-0 font-bold border-y border-green-700 text-sm leading-none">{item.qty}</span>
+                        <button
+                          onClick={() => increaseQty(item._id)}
+                          className="bg-green-700 w-6 h-6 flex items-center justify-center text-white rounded-r text-xs hover:bg-green-800"
+                        >
+                          <Plus size={13} />
+                        </button>
+                        {/* Delete/trash button */}
+                        <button
+                          onClick={() => removeFromCart(item._id)}
+                          aria-label="Remove item"
+                          className="ml-2 p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center pr-1">
-                    <button
-                      onClick={() => decreaseQty(item.id)}
-                      disabled={item.qty === 1}
-                      className={`bg-green-700 w-6 h-6 flex items-center justify-center text-white rounded-l text-xs ${item.qty === 1 ? "opacity-60 cursor-not-allowed" : "hover:bg-green-800"}`}
-                    >
-                      <Minus size={13} />
-                    </button>
-                    <span className="bg-white px-2 py-0 font-bold border-y border-green-700 text-sm leading-none">{item.qty}</span>
-                    <button
-                      onClick={() => increaseQty(item.id)}
-                      className="bg-green-700 w-6 h-6 flex items-center justify-center text-white rounded-r text-xs hover:bg-green-800"
-                    >
-                      <Plus size={13} />
-                    </button>
-                    {/* Delete/trash button */}
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      aria-label="Remove item"
-                      className="ml-2 p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition"
-                    >
-                      <Trash size={16} />
-                    </button>
+                  ))}
+                </div>
+                
+                {/* Bill details */}
+                <div className="bg-gray-50 rounded-xl mx-4 my-4 px-5 py-4">
+                  <div className="font-bold text-lg mb-2">Bill details</div>
+                  <div className="flex justify-between items-center py-1">Items total <span>₹{itemsTotal}</span></div>
+                  
+                  {loadingCharges ? (
+                    <div className="flex justify-between items-center py-1">
+                      <span>Loading charges...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-center py-1">
+                        <span className="flex items-center gap-1">
+                          <span role="img" aria-label="delivery">🛵</span>
+                          Delivery charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
+                        </span>
+                        <span className={charges.isFreeDelivery ? "text-green-600 font-semibold" : ""}>
+                          {charges.isFreeDelivery ? "FREE" : `₹${charges.deliveryCharge}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1">
+                        <span className="flex items-center gap-1">
+                          <span role="img" aria-label="handling">⚙️</span>
+                          Handling charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
+                        </span>
+                        <span>₹{charges.handlingCharge}</span>
+                      </div>
+                      {charges.showSmallCartCharge && (
+                        <div className="flex justify-between items-center py-1">
+                          <span className="flex items-center gap-1">
+                            <span role="img" aria-label="small cart">🛒</span>
+                            Small cart charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
+                          </span>
+                          <span>₹{charges.smallCartCharge}</span>
+                        </div>
+                      )}
+                      {charges.isFreeDelivery && (
+                        <div className="text-green-600 text-sm py-1">
+                          🎉 Free delivery on orders above ₹{deliveryCharges.freeDeliveryThreshold}
+                        </div>
+                      )}
+                    </>
+                  )}
+                  
+                  <div className="flex justify-between items-center border-t border-gray-200 mt-2 pt-2 font-bold">
+                    <span>Grand total</span>
+                    <span>₹{grandTotal}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-            {/* Bill details */}
-            <div className="bg-gray-50 rounded-xl mx-4 my-4 px-5 py-4">
-              <div className="font-bold text-lg mb-2">Bill details</div>
-              <div className="flex justify-between items-center py-1">Items total <span>₹{itemsTotal}</span></div>
-              <div className="flex justify-between items-center py-1">
-                <span className="flex items-center gap-1">
-                  <span role="img" aria-label="delivery">🛵</span>
-                  Delivery charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
-                </span>
-                <span>₹{deliveryCharge}</span>
-              </div>
-              <div className="flex justify-between items-center py-1">
-                <span className="flex items-center gap-1">
-                  <span role="img" aria-label="handling">⚙️</span>
-                  Handling charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
-                </span>
-                <span>₹{handlingCharge}</span>
-              </div>
-              {showSmallCartCharge && (
-                <div className="flex justify-between items-center py-1">
-                  <span className="flex items-center gap-1">
-                    <span role="img" aria-label="small cart">🛒</span>
-                    Small cart charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
-                  </span>
-                  <span>₹{smallCartCharge}</span>
+                
+                {/* Cancellation Policy */}
+                <div className="bg-white rounded-xl mx-4 my-4 px-5 py-3">
+                  <div className="font-bold mb-1 text-base">Cancellation Policy</div>
+                  <p className="text-gray-600 text-xs">
+                    Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
+                  </p>
                 </div>
-              )}
-              <div className="flex justify-between items-center border-t border-gray-200 mt-2 pt-2 font-bold">
-                <span>Grand total</span>
-                <span>₹{grandTotal}</span>
-              </div>
-            </div>
-            {/* Cancellation Policy */}
-            <div className="bg-white rounded-xl mx-4 my-4 px-5 py-3">
-              <div className="font-bold mb-1 text-base">Cancellation Policy</div>
-              <p className="text-gray-600 text-xs">
-                Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
-              </p>
-            </div>
-            {/* Bottom Bar */}
-            <div className="fixed bottom-0 left-0 right-0 sm:right-auto sm:left-auto sm:bottom-0 w-full sm:max-w-md z-50 bg-green-600 flex items-center justify-between rounded-t-2xl px-6 py-4">
-              <div className="font-bold text-white text-lg">
-                ₹{grandTotal} <span className="text-xs font-normal">TOTAL</span>
-              </div>
-              <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    alert("Please login to proceed!");
-                    setShowLoginModal(true);
-                  } else {
-                    // Proceed to checkout logic here...
-                  }
-                }}
-                className="bg-white text-red-700 font-bold px-8 py-3 rounded-lg text-lg hover:bg-gray-100 transition"
-              >
-                Login to Proceed&nbsp;
-                <svg className="inline-block w-4 h-4 align-middle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
+                
+                {/* Bottom Bar */}
+                <div className="fixed bottom-0 left-0 right-0 sm:right-auto sm:left-auto sm:bottom-0 w-full sm:max-w-md z-50 bg-green-600 flex items-center justify-between rounded-t-2xl px-6 py-4">
+                  <div className="font-bold text-white text-lg">
+                    ₹{grandTotal} <span className="text-xs font-normal">TOTAL</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!isLoggedIn) {
+                        alert("Please login to proceed!");
+                        setShowLoginModal(true);
+                      } else {
+                        // Proceed to checkout logic here...
+                      }
+                    }}
+                    className="bg-white text-red-700 font-bold px-8 py-3 rounded-lg text-lg hover:bg-gray-100 transition"
+                  >
+                    Login to Proceed&nbsp;
+                    <svg className="inline-block w-4 h-4 align-middle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </AnimatePresence>

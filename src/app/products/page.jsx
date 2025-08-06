@@ -2,33 +2,36 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ChevronDown, Clock, Star } from 'lucide-react';
+import { ChevronDown, Clock, Star, Check } from 'lucide-react';
 import { apiService } from '../../utils/api';
-
-
-
-
+import { useCart } from '../../context/CartContext';
 
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [quantity, setQuantity] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
+  const { addToCart, isInCart, getItemQuantity, increaseQty, decreaseQty } = useCart();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     setIsAdding(true);
-    setTimeout(() => {
-      setQuantity(prev => prev + 1);
-      setIsAdding(false);
-    }, 300);
+    try {
+      addToCart(product);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setTimeout(() => setIsAdding(false), 500);
+    }
   };
 
-  const handleIncrement = () => {
-    setQuantity(prev => prev + 1);
+  const handleIncreaseQuantity = () => {
+    increaseQty(product._id);
   };
 
-  const handleDecrement = () => {
-    setQuantity(prev => Math.max(0, prev - 1));
+  const handleDecreaseQuantity = () => {
+    decreaseQty(product._id);
   };
+
+  const isInCartItem = isInCart(product._id);
+  const cartQuantity = getItemQuantity(product._id);
 
   return (
     <div 
@@ -52,6 +55,18 @@ const ProductCard = ({ product }) => {
         </div>
       )}
 
+      {/* Offer Badge for products with offers */}
+      {(product.offerPercentage > 0 || (product.discountedPrice && product.discountedPrice < product.price)) && (
+        <div className="absolute top-2 left-2 z-10">
+          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-md font-medium">
+            {product.offerPercentage > 0 
+              ? `${Math.round(product.offerPercentage)}% OFF`
+              : `₹${Math.round(product.price - product.discountedPrice)} OFF`
+            }
+          </span>
+        </div>
+      )}
+
       {/* Product Image */}
       <div className="relative h-48 overflow-hidden">
         <Image
@@ -60,6 +75,9 @@ const ProductCard = ({ product }) => {
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
           className="object-cover transition-transform duration-200 hover:scale-105"
+          onError={(e) => {
+            e.target.src = '/images/explore/tomato.png';
+          }}
         />
       </div>
 
@@ -79,7 +97,7 @@ const ProductCard = ({ product }) => {
         {/* Volume with Dropdown */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors">
-            <span>{product.quantity || product.volume || "1 unit"}</span>
+            <span>{product.quantity || product.volume || product.unit || "1 unit"}</span>
             <ChevronDown className="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" />
           </div>
           {product.options && (
@@ -90,50 +108,63 @@ const ProductCard = ({ product }) => {
         {/* Price */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="font-bold text-gray-900">₹{product.price}</span>
-            {product.originalPrice && (
-              <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
+            <span className="font-bold text-gray-900">
+              ₹{product.discountedPrice || product.price}
+            </span>
+            {product.discountedPrice && product.discountedPrice < product.price && (
+              <span className="text-sm text-gray-500 line-through">₹{product.price}</span>
             )}
           </div>
             
-            {/* Interactive Add/Quantity Controls */}
-            {quantity === 0 ? (
+          {/* Interactive Add/Quantity Controls */}
+          {!isInCartItem ? (
+            <button 
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                isAdding 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
+              }`}
+            >
+              {isAdding ? 'ADDING...' : 'ADD'}
+            </button>
+          ) : (
+            <div className="flex items-center space-x-2 bg-green-50 rounded-md px-2 py-1">
               <button 
-                onClick={handleAddToCart}
-                disabled={isAdding}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  isAdding 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
-                }`}
+                onClick={handleDecreaseQuantity}
+                className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
               >
-                {isAdding ? 'ADDING...' : 'ADD'}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
               </button>
-            ) : (
-              <div className="flex items-center space-x-2 bg-green-50 rounded-md px-2 py-1">
-                <button 
-                  onClick={handleDecrement}
-                  className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
-                <span className="text-sm font-medium text-gray-900 min-w-[20px] text-center">
-                  {quantity}
-                </span>
-                <button 
-                  onClick={handleIncrement}
-                  className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
+              <span className="text-sm font-medium text-gray-900 min-w-[20px] text-center">
+                {cartQuantity}
+              </span>
+              <button 
+                onClick={handleIncreaseQuantity}
+                className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Stock Info */}
+        <div className="text-xs text-gray-600 mt-2">
+          {product.stockQuantity > 0 ? (
+            <span className="text-green-600">In Stock: {product.stockQuantity}</span>
+          ) : product.stockQuantity === 0 ? (
+            <span className="text-red-500">Out of Stock</span>
+          ) : (
+            <span className="text-gray-500">Stock: Available</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -66,6 +66,40 @@ class ApiService {
   async getProductById(id) {
     return this.request(`/products/${id}`);
   }
+
+  // Get products with active offers
+  async getProductsWithOffers(params = {}) {
+    const defaultParams = {
+      hasActiveOffer: 'true',
+      inStock: 'true',
+      limit: 12,
+      sort: 'offerPercentage',
+      order: 'desc',
+      ...params
+    };
+    const queryString = new URLSearchParams(defaultParams).toString();
+    console.log('Fetching products with offers:', `/products?${queryString}`);
+    const response = await this.request(`/products?${queryString}`);
+    console.log('Products with offers response:', response);
+    return response;
+  }
+
+  // Contact API
+  async submitContact(contactData) {
+    return this.request('/contact', {
+      method: 'POST',
+      body: JSON.stringify(contactData),
+    });
+  }
+
+  // Settings APIs
+  async getSettings() {
+    return this.request('/settings');
+  }
+
+  async getDeliveryCharges() {
+    return this.request('/settings/delivery-charges');
+  }
 }
 
 export const apiService = new ApiService(); 
