@@ -8,7 +8,7 @@ The CategorySection and products page have been fully integrated with the backen
 ### Environment Setup
 Create a `.env.local` file in the root directory:
 ```
-NEXT_PUBLIC_API_URL=http://localhost:9000/api/v1
+NEXT_PUBLIC_API_BASE_URL=http://localhost:9000/api/v1
 ```
 
 ### API Endpoints Used
@@ -149,8 +149,8 @@ Ensure your backend has:
 
 ### Testing the Integration
 
-1. **Start the backend** server on port 8000
-2. **Set environment variable** `NEXT_PUBLIC_API_URL`
+1. **Start the backend** server on port 9000
+2. **Set environment variable** `NEXT_PUBLIC_API_BASE_URL`
 3. **Start the frontend** with `npm run dev`
 4. **Navigate to landing page** and click categories
 5. **Verify dynamic loading** of categories and products

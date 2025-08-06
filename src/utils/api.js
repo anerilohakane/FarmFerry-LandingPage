@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
 
 class ApiService {
   constructor() {
@@ -7,6 +7,9 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    console.log('API Request URL:', url);
+    console.log('Base URL:', this.baseURL);
+    console.log('Endpoint:', endpoint);
     
     const defaultOptions = {
       headers: {
@@ -53,9 +56,36 @@ class ApiService {
   async getAllProducts(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     console.log('API Request URL:', `/products?${queryString}`);
-    const response = await this.request(`/products?${queryString}`);
-    console.log('API Response:', response);
-    return response;
+    try {
+      const response = await this.request(`/products?${queryString}`);
+      console.log('API Response:', response);
+      
+      // Ensure we have a proper response structure
+      if (response && response.success) {
+        // Handle different possible response structures
+        const products = response.data?.products || response.data || response.products || [];
+        console.log('Extracted products:', products.length);
+        return {
+          success: true,
+          data: {
+            products: products,
+            pagination: response.data?.pagination || response.pagination || {}
+          }
+        };
+      } else {
+        console.error('Invalid API response structure:', response);
+        return {
+          success: false,
+          error: 'Invalid response structure'
+        };
+      }
+    } catch (error) {
+      console.error('API request failed:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 
   async getProductsByCategory(categoryId, params = {}) {
@@ -79,9 +109,34 @@ class ApiService {
     };
     const queryString = new URLSearchParams(defaultParams).toString();
     console.log('Fetching products with offers:', `/products?${queryString}`);
-    const response = await this.request(`/products?${queryString}`);
-    console.log('Products with offers response:', response);
-    return response;
+    try {
+      const response = await this.request(`/products?${queryString}`);
+      console.log('Products with offers response:', response);
+      
+      if (response && response.success) {
+        const products = response.data?.products || response.data || response.products || [];
+        console.log('Extracted products with offers:', products.length);
+        return {
+          success: true,
+          data: {
+            products: products,
+            pagination: response.data?.pagination || response.pagination || {}
+          }
+        };
+      } else {
+        console.error('Invalid API response structure for offers:', response);
+        return {
+          success: false,
+          error: 'Invalid response structure'
+        };
+      }
+    } catch (error) {
+      console.error('API request for offers failed:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 
   // Contact API

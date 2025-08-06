@@ -1,7 +1,48 @@
 'use client'
 import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { apiService } from '../../utils/api'
 
 export default function Footer() {
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+    fetchCategories()
+  }, [])
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Fetch root categories (parent = null)
+      const response = await apiService.getAllCategories({
+        parent: 'null',
+        includeInactive: 'false'
+      })
+      
+      if (response.success) {
+        setCategories(response.data.categories)
+      } else {
+        setError('Failed to fetch categories')
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+      setError('Failed to load categories')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCategoryClick = (category) => {
+    // Navigate to products page with category parameter
+    window.location.href = `/products?category=${encodeURIComponent(category.name)}&categoryId=${category._id}&showAll=true`
+  }
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="container mx-auto px-4 pt-16 pb-8" id='contact'>
@@ -34,13 +75,32 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-8 md:col-span-1">
             <div>
               <h4 className="text-white font-semibold mb-4">Categories</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-green-500 transition-colors">Vegetables</a></li>
-                <li><a href="#" className="hover:text-green-500 transition-colors">Spices</a></li>
-                <li><a href="#" className="hover:text-green-500 transition-colors">Dry Fruits</a></li>
-                <li><a href="#" className="hover:text-green-500 transition-colors">Groceries</a></li>
-                <li><a href="#" className="hover:text-green-500 transition-colors">Organic</a></li>
-              </ul>
+              {!isMounted || loading ? (
+                <ul className="space-y-2">
+                  {[...Array(5)].map((_, index) => (
+                    <li key={index}>
+                      <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+                    </li>
+                  ))}
+                </ul>
+              ) : error ? (
+                <ul className="space-y-2">
+                  <li className="text-red-400 text-sm">Failed to load categories</li>
+                </ul>
+              ) : (
+                <ul className="space-y-2">
+                  {categories.slice(0, 5).map((category) => (
+                    <li key={category._id}>
+                      <button
+                        onClick={() => handleCategoryClick(category)}
+                        className="hover:text-green-500 transition-colors text-left w-full"
+                      >
+                        {category.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div>

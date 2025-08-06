@@ -80,8 +80,8 @@ export const CartProvider = ({ children }) => {
         const newItem = {
           _id: product._id,
           name: product.name,
-          price: product.price,
-          discountedPrice: product.discountedPrice,
+          price: parseFloat(product.price) || 0,
+          discountedPrice: product.discountedPrice ? parseFloat(product.discountedPrice) : null,
           offerPercentage: product.offerPercentage,
           unit: product.unit,
           stockQuantity: product.stockQuantity,
@@ -137,7 +137,7 @@ export const CartProvider = ({ children }) => {
   // Get cart total
   const getCartTotal = () => {
     return cart.reduce((total, item) => {
-      const price = item.discountedPrice || item.price;
+      const price = parseFloat(item.discountedPrice || item.price) || 0;
       return total + (price * item.qty);
     }, 0);
   };

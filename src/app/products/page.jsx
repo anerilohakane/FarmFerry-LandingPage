@@ -33,36 +33,68 @@ const ProductCard = ({ product }) => {
   const isInCartItem = isInCart(product._id);
   const cartQuantity = getItemQuantity(product._id);
 
+  // Calculate discount percentage and final price
+  const calculateDiscount = () => {
+    const originalPrice = parseFloat(product.price) || 0;
+    const discountedPrice = parseFloat(product.discountedPrice) || 0;
+    const offerPercentage = parseFloat(product.offerPercentage) || 0;
+    
+    if (discountedPrice > 0 && discountedPrice < originalPrice) {
+      const discountPercent = ((originalPrice - discountedPrice) / originalPrice) * 100;
+      return {
+        percentage: Math.round(discountPercent),
+        finalPrice: discountedPrice,
+        hasDiscount: true
+      };
+    } else if (offerPercentage > 0) {
+      const finalPrice = originalPrice - (originalPrice * offerPercentage / 100);
+      return {
+        percentage: Math.round(offerPercentage),
+        finalPrice: Math.round(finalPrice * 100) / 100,
+        hasDiscount: true
+      };
+    }
+    
+    return {
+      percentage: 0,
+      finalPrice: originalPrice,
+      hasDiscount: false
+    };
+  };
+
+  const discountInfo = calculateDiscount();
+
+  // Get the best image URL
+  const getImageUrl = () => {
+    if (product.images && product.images.length > 0) {
+      return product.images[0].url;
+    }
+    if (product.image) {
+      return product.image;
+    }
+    return "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80";
+  };
+
   return (
     <div 
       className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden relative group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Discount and Deal Badges */}
-      {product.discount && (
+      {/* Discount Badge */}
+      {discountInfo.hasDiscount && (
         <div className="absolute top-2 left-2 z-10">
-          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-md font-medium">
-            {product.discount}
-          </span>
-        </div>
-      )}
-      {product.deal && (
-        <div className="absolute top-2 right-2 z-10">
           <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-md font-medium">
-            {product.deal}
+            {discountInfo.percentage}% OFF
           </span>
         </div>
       )}
 
-      {/* Offer Badge for products with offers */}
-      {(product.offerPercentage > 0 || (product.discountedPrice && product.discountedPrice < product.price)) && (
-        <div className="absolute top-2 left-2 z-10">
-          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-md font-medium">
-            {product.offerPercentage > 0 
-              ? `${Math.round(product.offerPercentage)}% OFF`
-              : `₹${Math.round(product.price - product.discountedPrice)} OFF`
-            }
+      {/* Deal Badge */}
+      {product.deal && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-md font-medium">
+            {product.deal}
           </span>
         </div>
       )}
@@ -70,7 +102,7 @@ const ProductCard = ({ product }) => {
       {/* Product Image */}
       <div className="relative h-48 overflow-hidden">
         <Image
-          src={product.images?.[0]?.url || product.image || "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"}
+          src={getImageUrl()}
           alt={product.name}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
@@ -109,9 +141,9 @@ const ProductCard = ({ product }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-gray-900">
-              ₹{product.discountedPrice || product.price}
+              ₹{discountInfo.finalPrice}
             </span>
-            {product.discountedPrice && product.discountedPrice < product.price && (
+            {discountInfo.hasDiscount && (
               <span className="text-sm text-gray-500 line-through">₹{product.price}</span>
             )}
           </div>
@@ -321,26 +353,26 @@ const ProductsPage = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const categoryParam = urlParams.get('category');
     const categoryIdParam = urlParams.get('categoryId');
+    const showAllParam = urlParams.get('showAll');
     
     if (categoryParam && categoryIdParam) {
       setSelectedCategory(categoryParam);
       setSelectedCategoryId(categoryIdParam);
-      fetchCategoryData(categoryIdParam);
+      fetchCategoryData(categoryIdParam, showAllParam === 'true');
     } else {
       setLoading(false);
     }
   }, []);
 
-  const fetchCategoryData = async (categoryId) => {
+  const fetchCategoryData = async (categoryId, showAll = false) => {
     try {
       setLoading(true);
       setError(null);
 
       // Fetch category details and subcategories
-      const [categoryResponse, subcategoriesResponse, productsResponse] = await Promise.all([
+      const [categoryResponse, subcategoriesResponse] = await Promise.all([
         apiService.getCategoryById(categoryId),
-        apiService.getAllCategories({ parent: categoryId, includeInactive: 'false' }),
-        apiService.getAllProducts({ category: categoryId, limit: 100 }) // Request more products
+        apiService.getAllCategories({ parent: categoryId, includeInactive: 'false' })
       ]);
 
       if (categoryResponse.success) {
@@ -352,19 +384,25 @@ const ProductsPage = () => {
       if (subcategoriesResponse.success) {
         const subcats = subcategoriesResponse.data.categories;
         setSubcategories(subcats);
-        if (subcats.length > 0) {
-          setSelectedSubcategory(subcats[0]._id);
+        
+        // If showAll is true, fetch all products from main category and subcategories
+        if (showAll) {
+          await fetchAllProductsFromCategory(categoryId, subcats);
+          // Set the main category as selected subcategory for "All Products"
+          setSelectedSubcategory(categoryId);
+        } else {
+          if (subcats.length > 0) {
+            setSelectedSubcategory(subcats[0]._id);
+            // Fetch products for the first subcategory
+            await fetchProductsForSubcategory(subcats[0]._id);
+          } else {
+            // No subcategories, fetch products for main category
+            await fetchProductsForSubcategory(categoryId);
+          }
         }
-      }
-
-      if (productsResponse.success) {
-        console.log('Products fetched:', productsResponse.data.products?.length || 0);
-        console.log('Products data:', productsResponse.data);
-        // Handle different response structures
-        const products = productsResponse.data.products || productsResponse.data || productsResponse.products || [];
-        setCurrentProducts(products);
       } else {
-        console.error('Failed to fetch products:', productsResponse);
+        // No subcategories, fetch products for main category
+        await fetchProductsForSubcategory(categoryId);
       }
     } catch (error) {
       console.error('Error fetching category data:', error);
@@ -374,24 +412,80 @@ const ProductsPage = () => {
     }
   };
 
+  const fetchAllProductsFromCategory = async (mainCategoryId, subcategories) => {
+    try {
+      // Collect all category IDs (main category + subcategories)
+      const allCategoryIds = [mainCategoryId, ...subcategories.map(sub => sub._id)];
+      
+      // Fetch products for all categories
+      const productPromises = allCategoryIds.map(categoryId => 
+        apiService.getAllProducts({ category: categoryId, limit: 100, inStock: 'true' })
+      );
+      
+      const responses = await Promise.all(productPromises);
+      
+      // Combine all products from all categories
+      let allProducts = [];
+      responses.forEach((response, index) => {
+        if (response.success) {
+          const products = response.data?.products || response.data || response.products || [];
+          console.log(`Products from category ${allCategoryIds[index]}:`, products.length);
+          allProducts = [...allProducts, ...products];
+        }
+      });
+      
+      console.log('Total products from all categories:', allProducts.length);
+      setCurrentProducts(allProducts);
+    } catch (error) {
+      console.error('Error fetching all products from category:', error);
+      setError('Failed to fetch all products. Please try again.');
+    }
+  };
+
+  const fetchProductsForSubcategory = async (subcategoryId) => {
+    try {
+      const response = await apiService.getAllProducts({ category: subcategoryId, limit: 100, inStock: 'true' });
+      if (response.success) {
+        console.log('Subcategory products fetched:', response.data.products?.length || 0);
+        const products = response.data.products || response.data || response.products || [];
+        console.log('Processed subcategory products:', products);
+        setCurrentProducts(products);
+      } else {
+        console.error('Failed to fetch subcategory products:', response);
+        setError('Failed to fetch subcategory products. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error fetching subcategory products:', error);
+      setError('Failed to fetch subcategory products. Please try again.');
+    }
+  };
+
   const handleSubcategoryClick = async (subcategoryId) => {
     setIsLoading(true);
     setSelectedSubcategory(subcategoryId);
     
     try {
-      // Fetch products for the selected subcategory
-      const response = await apiService.getAllProducts({ category: subcategoryId, limit: 100 });
-      if (response.success) {
-        console.log('Subcategory products fetched:', response.data.products?.length || 0);
-        console.log('Subcategory products data:', response.data);
-        // Handle different response structures
-        const products = response.data.products || response.data || response.products || [];
-        setCurrentProducts(products);
+      // If clicking on "All Products" (main category), fetch all products from main category and subcategories
+      if (subcategoryId === selectedCategoryId) {
+        await fetchAllProductsFromCategory(selectedCategoryId, subcategories);
       } else {
-        console.error('Failed to fetch subcategory products:', response);
+        // Fetch products for the selected subcategory
+        const response = await apiService.getAllProducts({ category: subcategoryId, limit: 100, inStock: 'true' });
+        if (response.success) {
+          console.log('Subcategory products fetched:', response.data.products?.length || 0);
+          console.log('Subcategory products data:', response.data);
+          // Handle different response structures
+          const products = response.data.products || response.data || response.products || [];
+          console.log('Processed subcategory products:', products);
+          setCurrentProducts(products);
+        } else {
+          console.error('Failed to fetch subcategory products:', response);
+          setError('Failed to fetch subcategory products. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Error fetching subcategory products:', error);
+      setError('Failed to fetch subcategory products. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -399,6 +493,8 @@ const ProductsPage = () => {
 
   // Filter and sort products
   const filteredAndSortedProducts = React.useMemo(() => {
+    console.log('Filtering and sorting products:', currentProducts.length);
+    
     let filtered = currentProducts.filter(product => 
       product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -422,6 +518,7 @@ const ProductsPage = () => {
       }
     });
 
+    console.log('Filtered and sorted products:', filtered.length);
     return filtered;
   }, [currentProducts, searchTerm, sortBy, priceRange]);
 
@@ -525,11 +622,15 @@ const ProductsPage = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Buy {selectedCategory}</h1>
-              {selectedSubcategory && selectedSubcategory !== selectedCategoryId && (
+              {selectedSubcategory && selectedSubcategory !== selectedCategoryId ? (
                 <p className="text-sm text-gray-600 mt-1">
                   Showing products from: {subcategories.find(sub => sub._id === selectedSubcategory)?.name || 'Selected Category'}
                 </p>
-              )}
+              ) : selectedSubcategory === selectedCategoryId && subcategories.length > 0 ? (
+                <p className="text-sm text-gray-600 mt-1">
+                  Showing all products from {selectedCategory} and its subcategories
+                </p>
+              ) : null}
             </div>
           </div>
           

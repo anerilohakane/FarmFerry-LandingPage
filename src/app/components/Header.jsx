@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { ShoppingCart, X, Minus, Plus, Trash } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ShoppingCart, X, Minus, Plus, Trash, Info, Clock, Package, CheckCircle, Shield, PhoneCall, ArrowRight, LogIn, Truck } from 'lucide-react';
 import Image from 'next/image';
 import { useCart } from '../../context/CartContext';
 
@@ -104,7 +104,6 @@ const navItems = [
 ];
 
 const Navbar = () => {
-  // Cart context
   const { 
     cart, 
     cartOpen, 
@@ -120,16 +119,13 @@ const Navbar = () => {
     getGrandTotal
   } = useCart();
 
-  // Auth/Modal state
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Cart calculations using dynamic charges
   const itemsTotal = getCartTotal();
   const charges = getDeliveryCharges();
   const grandTotal = getGrandTotal();
 
-  // Scroll To Section function
   const scrollToSection = (sectionId) => {
     if (sectionId === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -155,14 +151,12 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Login modal */}
       <LoginModal open={showLoginModal} onClose={() => setShowLoginModal(false)} />
 
       <header className="fixed w-full top-0 z-50 bg-white shadow-sm">
         <div className="border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
             <div className="flex justify-between h-20 items-center">
-              {/* Logo and Brand */}
               <div className="flex items-center space-x-6">
                 <div className="flex-shrink-0">
                   <img
@@ -173,7 +167,6 @@ const Navbar = () => {
                   />
                 </div>
               </div>
-              {/* Navigation Links */}
               <nav className="hidden md:flex items-center space-x-10">
                 {navItems.map((item) => (
                   <button
@@ -185,7 +178,6 @@ const Navbar = () => {
                   </button>
                 ))}
               </nav>
-              {/* Right controls */}
               <div className="flex items-center gap-5">
                 <button
                   onClick={redirectToPlayStore}
@@ -227,194 +219,256 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Cart Drawer */}
       <AnimatePresence>
         {cartOpen && (
-          <div
-            className="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white z-[999] flex flex-col shadow-2xl overflow-y-auto"
-          >
-            {/* Cart Header */}
-            <div className="flex items-center justify-between p-6 pb-3 border-b">
-              <div className="text-2xl font-bold">My Cart</div>
+          <>
+            {/* Background overlay - same as login modal */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/30 z-[998]"
+              onClick={() => setCartOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30 }}
+              className="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white z-[999] flex flex-col shadow-xl overflow-y-auto"
+            >
+            <div className="flex items-center justify-between p-6 pb-3 border-b sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-3">
+                <ShoppingCart className="text-green-600" size={24} />
+                <h2 className="text-2xl font-bold text-gray-800">My Cart</h2>
+                {getCartItemCount() > 0 && (
+                  <span className="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                    {getCartItemCount()} item{getCartItemCount() > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
               <button
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition"
+                className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition hover:text-gray-700"
                 onClick={() => setCartOpen(false)}
+                aria-label="Close cart"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
             
             {cart.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center p-6">
-                <div className="text-center">
-                  <ShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Your cart is empty</h3>
-                  <p className="text-gray-500 mb-4">Add some products to get started!</p>
-                  <button
-                    onClick={() => setCartOpen(false)}
-                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    Continue Shopping
-                  </button>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex-1 flex flex-col items-center justify-center p-6 text-center"
+              >
+                <div className="bg-green-50 p-6 rounded-full mb-4">
+                  <ShoppingCart size={48} className="text-green-400" />
                 </div>
-              </div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Your cart feels light</h3>
+                <p className="text-gray-500 mb-6 max-w-md">
+                  Your shopping cart is waiting to be filled! Explore our fresh products and add something special.
+                </p>
+                <button
+                  onClick={() => setCartOpen(false)}
+                  className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
+                >
+                  Browse Products
+                </button>
+              </motion.div>
             ) : (
               <>
-                {/* Delivery Info */}
-                <div className="bg-gray-50 px-6 py-5 flex items-center gap-4 rounded-xl mx-4 my-4">
-                  <div className="bg-white w-12 h-12 flex items-center justify-center rounded-full shadow border">
-                    <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" stroke="#4ade80" strokeWidth="2" />
-                      <path d="M12 7v5l3 2" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 flex items-start gap-4 mx-4 my-4 rounded-xl border border-green-100"
+                >
+                  <div className="bg-white p-2 rounded-full shadow-sm border border-green-200 mt-1">
+                    <Clock size={20} className="text-green-600" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold text-black">Delivery in {deliveryCharges.deliveryTime}</div>
-                    <div className="text-gray-700 text-sm">Shipment of {getCartItemCount()} item{getCartItemCount() > 1 ? 's' : ''}</div>
+                    <div className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                      Delivery in {deliveryCharges.deliveryTime}
+                      {deliveryCharges.isFreeDelivery && (
+                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
+                          <CheckCircle size={14} className="mr-1" /> Free Delivery
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-gray-600 text-sm mt-1">
+                      {getCartItemCount()} item{getCartItemCount() > 1 ? 's' : ''} • {deliveryCharges.deliveryDate}
+                    </div>
                   </div>
-                </div>
+                </motion.div>
                 
-                {/* Cart Items */}
-                <div className="px-4 pb-0">
+                <div className="px-4 pb-4 space-y-3">
                   {cart.map(item => (
-                    <div
+                    <motion.div
                       key={item._id}
-                      className="flex items-center justify-between bg-white py-0 mb-0 rounded-lg shadow border"
-                      style={{ minHeight: '56px' }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow"
                     >
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={item.image}
-                          width={88}
-                          height={48}
-                          alt={item.name}
-                          className="rounded border"
-                          onError={(e) => {
-                            e.target.src = '/images/explore/tomato.png';
-                          }}
-                        />
-                        <div>
-                          <div className="font-medium text-[13px] text-gray-800">{item.name}</div>
-                          <div className="text-gray-400 text-xs">{item.unit}</div>
-                          <div className="font-bold text-green-700 text-xs mt-1">
-                            ₹{item.discountedPrice || item.price}
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="relative">
+                          <Image
+                            src={item.image}
+                            width={72}
+                            height={72}
+                            alt={item.name}
+                            className="rounded-lg object-cover border border-gray-100"
+                            onError={(e) => {
+                              e.target.src = '/images/explore/tomato.png';
+                            }}
+                          />
+                          {item.discountedPrice && (
+                            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                              SALE
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-medium text-gray-800 truncate">{item.name}</h4>
+                          <div className="text-gray-500 text-xs">{item.unit}</div>
+                          <div className="mt-1 flex items-center">
+                            <span className="font-bold text-green-700">
+                              ₹{((item.discountedPrice || item.price) * item.qty).toFixed(2)}
+                            </span>
                             {item.discountedPrice && item.discountedPrice < item.price && (
-                              <span className="text-gray-500 line-through ml-1">₹{item.price}</span>
+                              <span className="text-gray-400 text-xs line-through ml-2">
+                                ₹{(item.price * item.qty).toFixed(2)}
+                              </span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center pr-1">
-                        <button
-                          onClick={() => decreaseQty(item._id)}
-                          disabled={item.qty === 1}
-                          className={`bg-green-700 w-6 h-6 flex items-center justify-center text-white rounded-l text-xs ${item.qty === 1 ? "opacity-60 cursor-not-allowed" : "hover:bg-green-800"}`}
-                        >
-                          <Minus size={13} />
-                        </button>
-                        <span className="bg-white px-2 py-0 font-bold border-y border-green-700 text-sm leading-none">{item.qty}</span>
-                        <button
-                          onClick={() => increaseQty(item._id)}
-                          className="bg-green-700 w-6 h-6 flex items-center justify-center text-white rounded-r text-xs hover:bg-green-800"
-                        >
-                          <Plus size={13} />
-                        </button>
-                        {/* Delete/trash button */}
+                      <div className="flex items-center">
+                        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => decreaseQty(item._id)}
+                            disabled={item.qty === 1}
+                            className={`bg-gray-50 w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition ${
+                              item.qty === 1 ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="bg-white px-2 py-1 font-medium text-gray-800 text-sm w-8 text-center">
+                            {item.qty}
+                          </span>
+                          <button
+                            onClick={() => increaseQty(item._id)}
+                            className="bg-gray-50 w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
                         <button
                           onClick={() => removeFromCart(item._id)}
                           aria-label="Remove item"
-                          className="ml-2 p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition"
+                          className="ml-2 p-1.5 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-500 transition"
                         >
                           <Trash size={16} />
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
                 
-                {/* Bill details */}
-                <div className="bg-gray-50 rounded-xl mx-4 my-4 px-5 py-4">
-                  <div className="font-bold text-lg mb-2">Bill details</div>
-                  <div className="flex justify-between items-center py-1">Items total <span>₹{itemsTotal}</span></div>
+                <div className="bg-gray-50 rounded-xl mx-4 my-4 px-5 py-4 border border-gray-100">
+                  <h3 className="font-bold text-lg mb-3 text-gray-800">Order Summary</h3>
                   
-                  {loadingCharges ? (
-                    <div className="flex justify-between items-center py-1">
-                      <span>Loading charges...</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-medium">₹{itemsTotal.toFixed(2)}</span>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex justify-between items-center py-1">
-                        <span className="flex items-center gap-1">
-                          <span role="img" aria-label="delivery">🛵</span>
-                          Delivery charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
-                        </span>
-                        <span className={charges.isFreeDelivery ? "text-green-600 font-semibold" : ""}>
-                          {charges.isFreeDelivery ? "FREE" : `₹${charges.deliveryCharge}`}
-                        </span>
+                    
+                    {loadingCharges ? (
+                      <div className="flex justify-between items-center py-1 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
                       </div>
-                      <div className="flex justify-between items-center py-1">
-                        <span className="flex items-center gap-1">
-                          <span role="img" aria-label="handling">⚙️</span>
-                          Handling charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
-                        </span>
-                        <span>₹{charges.handlingCharge}</span>
-                      </div>
-                      {charges.showSmallCartCharge && (
-                        <div className="flex justify-between items-center py-1">
-                          <span className="flex items-center gap-1">
-                            <span role="img" aria-label="small cart">🛒</span>
-                            Small cart charge <span className="ml-1 text-xs text-gray-400 cursor-help">i</span>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center pt-2">
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <Truck size={14} className="text-gray-500" />
+                            <span>Delivery</span>
+                            <button className="text-gray-400 hover:text-gray-600" title="Delivery charges may vary">
+                              <Info size={14} />
+                            </button>
+                          </div>
+                          <span className={charges.isFreeDelivery ? "text-green-600 font-medium" : ""}>
+                            {charges.isFreeDelivery ? "FREE" : `₹${charges.deliveryCharge}`}
                           </span>
-                          <span>₹{charges.smallCartCharge}</span>
                         </div>
-                      )}
-                      {charges.isFreeDelivery && (
-                        <div className="text-green-600 text-sm py-1">
-                          🎉 Free delivery on orders above ₹{deliveryCharges.freeDeliveryThreshold}
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <Package size={14} className="text-gray-500" />
+                            <span>Handling</span>
+                          </div>
+                          <span>₹{charges.handlingCharge}</span>
                         </div>
-                      )}
-                    </>
-                  )}
-                  
-                  <div className="flex justify-between items-center border-t border-gray-200 mt-2 pt-2 font-bold">
-                    <span>Grand total</span>
-                    <span>₹{grandTotal}</span>
+                        
+                        {charges.showSmallCartCharge && (
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <ShoppingCart size={14} className="text-gray-500" />
+                              <span>Small order</span>
+                            </div>
+                            <span>₹{charges.smallCartCharge}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    
+                    <div className="border-t border-gray-200 mt-3 pt-3 flex justify-between items-center">
+                      <span className="font-semibold text-gray-700">Total</span>
+                      <span className="font-bold text-lg text-green-700">₹{grandTotal.toFixed(2)}</span>
+                    </div>
+                    
+                    {charges.isFreeDelivery && (
+                      <div className="bg-green-50 text-green-700 text-sm p-2 rounded mt-2 flex items-center gap-2">
+                        <CheckCircle size={16} />
+                        You saved ₹{charges.deliveryCharge} on delivery!
+                      </div>
+                    )}
                   </div>
                 </div>
-                
-                {/* Cancellation Policy */}
-                <div className="bg-white rounded-xl mx-4 my-4 px-5 py-3">
-                  <div className="font-bold mb-1 text-base">Cancellation Policy</div>
-                  <p className="text-gray-600 text-xs">
-                    Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
-                  </p>
-                </div>
-                
-                {/* Bottom Bar */}
-                <div className="fixed bottom-0 left-0 right-0 sm:right-auto sm:left-auto sm:bottom-0 w-full sm:max-w-md z-50 bg-green-600 flex items-center justify-between rounded-t-2xl px-6 py-4">
-                  <div className="font-bold text-white text-lg">
-                    ₹{grandTotal} <span className="text-xs font-normal">TOTAL</span>
-                  </div>
+                <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3 shadow-sm">
                   <button
                     onClick={() => {
                       if (!isLoggedIn) {
-                        alert("Please login to proceed!");
                         setShowLoginModal(true);
                       } else {
-                        // Proceed to checkout logic here...
+                        // Proceed to checkout
                       }
                     }}
-                    className="bg-white text-red-700 font-bold px-8 py-3 rounded-lg text-lg hover:bg-gray-100 transition"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
                   >
-                    Login to Proceed&nbsp;
-                    <svg className="inline-block w-4 h-4 align-middle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
+                    {isLoggedIn ? (
+                      <>
+                        Proceed to Checkout
+                        <ArrowRight className="ml-2" size={18} />
+                      </>
+                    ) : (
+                      <>
+                        Login to Continue
+                        <LogIn className="ml-2" size={18} />
+                      </>
+                    )}
                   </button>
+                  <p className="text-center text-xs text-gray-500 mt-2">
+                    By continuing, you agree to our Terms & Conditions
+                  </p>
                 </div>
               </>
             )}
-          </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

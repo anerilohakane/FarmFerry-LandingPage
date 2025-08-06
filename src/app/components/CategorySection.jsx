@@ -47,7 +47,7 @@ const CategoryItem = ({ category }) => {
 
   const handleCategoryClick = () => {
     // Navigate to products page with category parameter
-    window.location.href = `/products?category=${encodeURIComponent(category.name)}&categoryId=${category._id}`;
+    window.location.href = `/products?category=${encodeURIComponent(category.name)}&categoryId=${category._id}&showAll=true`;
   };
 
   // Get image URL from category or fallback
