@@ -531,12 +531,11 @@ const ProductsPage = () => {
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => window.history.back()}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span>Back</span>
               </button>
               <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
             </div>
@@ -581,12 +580,11 @@ const ProductsPage = () => {
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => window.history.back()}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span>Back</span>
               </button>
               <h1 className="text-2xl font-bold text-gray-900">Buy {selectedCategory}</h1>
             </div>
@@ -613,12 +611,11 @@ const ProductsPage = () => {
           <div className="flex items-center space-x-4">
             <button 
               onClick={() => window.history.back()}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span>Back</span>
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Buy {selectedCategory}</h1>
