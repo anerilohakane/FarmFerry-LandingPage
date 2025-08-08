@@ -27,7 +27,8 @@ class ApiService {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
@@ -36,6 +37,66 @@ class ApiService {
       console.error('API request failed:', error);
       throw error;
     }
+  }
+
+  // Authentication APIs
+  async registerCustomer(userData) {
+    return this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async loginCustomer(credentials) {
+    return this.request('/auth/login/customer', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  }
+
+  async sendPhoneVerification(phone) {
+    return this.request('/auth/send-phone-verification', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+  }
+
+  async verifyPhoneOTP(phone, otp) {
+    return this.request('/auth/verify-phone-otp', {
+      method: 'POST',
+      body: JSON.stringify({ phone, otp }),
+    });
+  }
+
+  async forgotPassword(email) {
+    return this.request('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, role: 'customer' }),
+    });
+  }
+
+  async resetPasswordWithOTP(email, otp, password) {
+    return this.request('/auth/reset-password-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, password }),
+    });
+  }
+
+  async refreshToken(refreshToken) {
+    return this.request('/auth/refresh-token', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    });
+  }
+
+  async logout() {
+    return this.request('/auth/logout', {
+      method: 'POST',
+    });
+  }
+
+  async getCurrentUser() {
+    return this.request('/auth/current-user');
   }
 
   // Category APIs
