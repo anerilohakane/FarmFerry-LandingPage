@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { User, MapPin, Gift, HelpCircle, Shield, LogOut, ArrowRight, Package, Clock, CheckCircle } from 'lucide-react';
+import { User, MapPin, Gift, HelpCircle, Shield, LogOut, ArrowRight, Package, Clock, CheckCircle, Plus, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 
@@ -19,6 +19,16 @@ const MyAccount = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const section = searchParams.get('section') || 'orders'; // Default to 'orders'
+  const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    type: 'Home',
+    flat: '',
+    floor: '',
+    area: '',
+    landmark: '',
+    name: '',
+    phone: '',
+  });
 
   // Mock data for orders and addresses (replace with actual data from your backend)
   const [orders, setOrders] = useState([
@@ -52,7 +62,155 @@ const MyAccount = () => {
     },
   ]);
 
+  const handleAddNewAddress = () => {
+    setShowAddAddressForm(true);
+  };
+
+  const handleSaveAddress = () => {
+    if (!newAddress.flat || !newAddress.area || !newAddress.name) {
+      alert('Please fill in all required fields (Flat/House, Area, Name).');
+      return;
+    }
+
+    const fullAddress = `${newAddress.flat}, ${newAddress.floor && `Floor ${newAddress.floor},`} ${newAddress.area}, ${newAddress.landmark && `Near ${newAddress.landmark},`} Pune, Maharashtra`;
+    
+    const newAddressObj = {
+      id: `addr-${Date.now()}`,
+      type: newAddress.type,
+      address: fullAddress,
+      isDefault: addresses.length === 0, // Set as default if it's the first address
+    };
+    
+    setAddresses([...addresses, newAddressObj]);
+    setNewAddress({
+      type: 'Home',
+      flat: '',
+      floor: '',
+      area: '',
+      landmark: '',
+      name: '',
+      phone: '',
+    });
+    setShowAddAddressForm(false);
+    router.push('/profile?section=addresses'); // Redirect back to addresses section
+  };
+
+  const renderAddAddressForm = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between border-b pb-3">
+        <button
+          onClick={() => setShowAddAddressForm(false)}
+          className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition hover:text-gray-700"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h3 className="text-lg font-semibold text-gray-800">Enter complete address</h3>
+        <div className="w-8"></div> {/* Spacer for alignment */}
+      </div>
+      
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          {['Home', 'Work', 'Hotel', 'Other'].map(type => (
+            <button
+              key={type}
+              onClick={() => setNewAddress({...newAddress, type})}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${newAddress.type === type ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Flat / House no / Building name *</label>
+          <input
+            type="text"
+            value={newAddress.flat}
+            onChange={(e) => setNewAddress({...newAddress, flat: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="e.g. 302, Parner Bhavan"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Floor (optional)</label>
+          <input
+            type="text"
+            value={newAddress.floor}
+            onChange={(e) => setNewAddress({...newAddress, floor: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="e.g. 3rd floor"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Area / Sector / Locality *</label>
+          <input
+            type="text"
+            value={newAddress.area}
+            onChange={(e) => setNewAddress({...newAddress, area: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="e.g. Wakad, Pune"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nearby landmark (optional)</label>
+          <input
+            type="text"
+            value={newAddress.landmark}
+            onChange={(e) => setNewAddress({...newAddress, landmark: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="e.g. Near Wakad Bridge"
+          />
+        </div>
+        
+        <div className="pt-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Enter your details for seamless delivery experience</h4>
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Your name *</label>
+            <input
+              type="text"
+              value={newAddress.name}
+              onChange={(e) => setNewAddress({...newAddress, name: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Your name"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Your phone number (optional)</label>
+            <input
+              type="tel"
+              value={newAddress.phone}
+              onChange={(e) => setNewAddress({...newAddress, phone: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Phone number"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <button
+        onClick={handleSaveAddress}
+        disabled={!newAddress.flat || !newAddress.area || !newAddress.name}
+        className={`w-full ${(!newAddress.flat || !newAddress.area || !newAddress.name) ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md`}
+      >
+        Save Address
+      </button>
+    </div>
+  );
+
   const renderSectionContent = () => {
+    if (section === 'addresses' && showAddAddressForm) {
+      return renderAddAddressForm();
+    }
+
     switch (section) {
       case 'orders':
         return (
@@ -105,7 +263,12 @@ const MyAccount = () => {
               <div className="text-center py-8">
                 <MapPin size={48} className="text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">No saved addresses.</p>
-                <button className="text-green-600 hover:underline mt-2">Add New Address</button>
+                <button
+                  onClick={handleAddNewAddress}
+                  className="text-green-600 hover:underline mt-2"
+                >
+                  Add New Address
+                </button>
               </div>
             ) : (
               addresses.map(address => (
@@ -125,7 +288,10 @@ const MyAccount = () => {
                 </div>
               ))
             )}
-            <button className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-green-500 hover:bg-green-50 transition flex items-center justify-center">
+            <button
+              onClick={handleAddNewAddress}
+              className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-green-500 hover:bg-green-50 transition flex items-center justify-center"
+            >
               <Plus size={20} className="text-green-600 mr-2" />
               <span className="text-green-600 font-medium">Add new address</span>
             </button>
@@ -221,8 +387,9 @@ const MyAccount = () => {
                 <Link
                   key={item.id}
                   href={`/profile?section=${item.id}`}
+                  onClick={() => setShowAddAddressForm(false)} // Reset form visibility when switching sections
                   className={`flex items-center justify-between p-4 border rounded-lg transition ${
-                    section === item.id ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
+                    section === item.id && !showAddAddressForm ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
