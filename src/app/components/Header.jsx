@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart, X, Minus, Plus, Trash, Info, Clock, Package, CheckCircle, Shield, PhoneCall, ArrowRight, LogIn, Truck, Mail, User, Lock, Smartphone, ArrowLeft, CreditCard, Wallet, Banknote } from 'lucide-react';
+import { ShoppingCart, X, Minus, Plus, Trash, Info, Clock, Package, CheckCircle, Shield, PhoneCall, ArrowRight, LogIn, Truck, Mail, User, Lock, Smartphone, ArrowLeft, CreditCard, Wallet, Banknote, UserCircle, MapPin, Gift, HelpCircle } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import AuthModal from './AuthModal';
@@ -14,6 +15,14 @@ const navItems = [
   { id: 'about', label: 'How it works' },
   { id: 'about-us', label: 'About us' },
   { id: 'contact', label: 'Contact' }
+];
+
+const profileItems = [
+  { id: 'orders', label: 'My Orders', icon: Package },
+  { id: 'addresses', label: 'Saved Addresses', icon: MapPin },
+  { id: 'gift-cards', label: 'E-Gift Cards', icon: Gift },
+  { id: 'faqs', label: "FAQ'S", icon: HelpCircle },
+  { id: 'privacy', label: 'Account Privacy', icon: Shield },
 ];
 
 const Navbar = () => {
@@ -36,6 +45,7 @@ const Navbar = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart', 'address', 'payment'
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [addresses, setAddresses] = useState([
     {
       id: '1',
@@ -85,6 +95,7 @@ const Navbar = () => {
   const handleAuthAction = () => {
     if (isAuthenticated) {
       logout();
+      setProfileOpen(false);
     } else {
       setShowAuthModal(true);
     }
@@ -140,7 +151,6 @@ const Navbar = () => {
   };
 
   const handlePlaceOrder = () => {
-    // Here you would typically send the order to your backend
     alert('Order placed successfully!');
     setCartOpen(false);
     setCheckoutStep('cart');
@@ -701,6 +711,59 @@ const Navbar = () => {
     </>
   );
 
+  const renderProfileSlider = () => (
+    <>
+      <div className="flex items-center justify-between p-6 pb-3 border-b sticky top-0 bg-white z-10">
+        <div className="flex items-center gap-3">
+          <UserCircle className="text-green-600" size={24} />
+          <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
+        </div>
+        <button
+          className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition hover:text-gray-700"
+          onClick={() => setProfileOpen(false)}
+          aria-label="Close profile"
+        >
+          <X size={20} />
+        </button>
+      </div>
+      
+      <div className="p-6">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Welcome, {user?.name || 'User'}</h3>
+          <p className="text-gray-600 text-sm">{user?.phone || '9322506730'}</p>
+          <p className="text-gray-600 text-sm">{user?.email || 'user@example.com'}</p>
+        </div>
+        
+        <div className="space-y-4">
+          {profileItems.map(item => (
+            <Link
+              key={item.id}
+              href={`/profile?section=${item.id}`}
+              onClick={() => setProfileOpen(false)}
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition"
+            >
+              <div className="flex items-center gap-3">
+                <item.icon size={20} className="text-gray-600" />
+                <span>{item.label}</span>
+              </div>
+              <ArrowRight size={18} className="text-gray-400" />
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          <button
+            onClick={handleAuthAction}
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
+          >
+            Log Out
+            <LogIn className="ml-2" size={18} />
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <>
       <AuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
@@ -732,42 +795,57 @@ const Navbar = () => {
               </nav>
               <div className="flex items-center gap-5">
                 <button
-                    onClick={redirectToPlayStore}
-                    className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-md text-base font-semibold flex items-center shadow-sm hover:shadow-md"
+                  onClick={redirectToPlayStore}
+                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-md text-base font-semibold flex items-center shadow-sm hover:shadow-md"
+                >
+                  Download the App
+                  <svg
+                    className="ml-2 -mr-1 h-5 w-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
-                    Download the App
-                    <svg
-                      className="ml-2 -mr-1 h-5 w-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={handleAuthAction}
-                    className="px-4 py-2 border border-green-600 text-green-600 rounded-md font-semibold hover:bg-green-50"
-                  >
-                    {isAuthenticated ? 'Logout' : 'Login'}
-                  </button>
+                    <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleAuthAction}
+                  className="px-4 py-2 border border-green-600 text-green-600 rounded-md font-semibold hover:bg-green-50"
+                >
+                  {isAuthenticated ? 'Logout' : 'Login'}
+                </button>
+                {isAuthenticated && (
                   <div className="relative">
                     <button
                       onClick={() => {
-                        setCartOpen(true);
-                        setCheckoutStep('cart');
+                        setProfileOpen(true);
+                        setCartOpen(false);
                       }}
                       className="p-2 rounded-full border border-gray-200 bg-green-50 text-green-700 shadow hover:bg-green-600 hover:text-white hover:border-green-600 transition"
-                      aria-label="Open cart"
+                      aria-label="Open profile"
                     >
-                      <ShoppingCart size={24} />
-                      {getCartItemCount() > 0 && (
-                        <span className="absolute top-0 right-0 -mt-1 -mr-1 rounded-full bg-green-600 px-1 text-xs text-white font-semibold">
-                          {getCartItemCount()}
-                        </span>
-                      )}
+                      <UserCircle size={24} />
                     </button>
                   </div>
+                )}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setCartOpen(true);
+                      setCheckoutStep('cart');
+                      setProfileOpen(false);
+                    }}
+                    className="p-2 rounded-full border border-gray-200 bg-green-50 text-green-700 shadow hover:bg-green-600 hover:text-white hover:border-green-600 transition"
+                    aria-label="Open cart"
+                  >
+                    <ShoppingCart size={24} />
+                    {getCartItemCount() > 0 && (
+                      <span className="absolute top-0 right-0 -mt-1 -mr-1 rounded-full bg-green-600 px-1 text-xs text-white font-semibold">
+                        {getCartItemCount()}
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -777,13 +855,6 @@ const Navbar = () => {
       <AnimatePresence>
         {cartOpen && (
           <>
-          <motion.div
-  initial={{ x: '100%' }}
-  animate={{ x: 0 }}
-  exit={{ x: '100%' }}
-  transition={{ type: 'spring', damping: 30 }}
-  className="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white z-[999] flex flex-col shadow-xl overflow-y-auto no-scrollbar" // Changed from hide-scrollbar to no-scrollbar
-></motion.div>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -800,12 +871,32 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30 }}
-              className="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white z-[999] flex flex-col shadow-xl overflow-y-auto hide-scrollbar"
+              className="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white z-[999] flex flex-col shadow-xl overflow-y-auto no-scrollbar"
             >
               {showAddAddressForm ? renderAddAddressForm() : 
                checkoutStep === 'cart' ? renderCart() : 
                checkoutStep === 'address' ? renderAddressSelection() : 
                renderPaymentMethod()}
+            </motion.div>
+          </>
+        )}
+        {profileOpen && isAuthenticated && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/30 z-[998]"
+              onClick={() => setProfileOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30 }}
+              className="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white z-[999] flex flex-col shadow-xl overflow-y-auto no-scrollbar"
+            >
+              {renderProfileSlider()}
             </motion.div>
           </>
         )}
