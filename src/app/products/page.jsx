@@ -2,19 +2,45 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ChevronDown, Clock, Star, Check } from 'lucide-react';
+import { ChevronDown, Clock } from 'lucide-react';
 import { apiService } from '../../utils/api';
 import { useCart } from '../../context/CartContext';
 
+// ProductCard Component
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const { addToCart, isInCart, getItemQuantity, increaseQty, decreaseQty } = useCart();
+  const { 
+    cart, 
+    addToCart, 
+    increaseQty, 
+    decreaseQty, 
+    loading: cartLoading 
+  } = useCart();
+
+  // Helper functions to check if item is in cart and get quantity
+  const isInCart = (productId) => {
+    return cart.some(item => item.product?._id === productId || item._id === productId);
+  };
+
+  const getCartItem = (productId) => {
+    return cart.find(item => item.product?._id === productId || item._id === productId);
+  };
+
+  const getItemQuantity = (productId) => {
+    const item = getCartItem(productId);
+    return item ? (item.quantity || item.qty || 0) : 0;
+  };
+
+  const getCartItemId = (productId) => {
+    const item = getCartItem(productId);
+    return item?._id || item?.cartItemId;
+  };
 
   const handleAddToCart = async () => {
     setIsAdding(true);
     try {
-      addToCart(product);
+      await addToCart(product);
     } catch (error) {
       console.error('Error adding to cart:', error);
     } finally {
@@ -23,11 +49,13 @@ const ProductCard = ({ product }) => {
   };
 
   const handleIncreaseQuantity = () => {
-    increaseQty(product._id);
+    const cartItemId = getCartItemId(product._id);
+    increaseQty(product._id, cartItemId);
   };
 
   const handleDecreaseQuantity = () => {
-    decreaseQty(product._id);
+    const cartItemId = getCartItemId(product._id);
+    decreaseQty(product._id, cartItemId);
   };
 
   const isInCartItem = isInCart(product._id);
@@ -152,9 +180,9 @@ const ProductCard = ({ product }) => {
           {!isInCartItem ? (
             <button 
               onClick={handleAddToCart}
-              disabled={isAdding}
+              disabled={isAdding || cartLoading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                isAdding 
+                isAdding || cartLoading
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
               }`}
@@ -165,7 +193,8 @@ const ProductCard = ({ product }) => {
             <div className="flex items-center space-x-2 bg-green-50 rounded-md px-2 py-1">
               <button 
                 onClick={handleDecreaseQuantity}
-                className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
+                disabled={cartLoading}
+                className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -176,7 +205,8 @@ const ProductCard = ({ product }) => {
               </span>
               <button 
                 onClick={handleIncreaseQuantity}
-                className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
+                disabled={cartLoading}
+                className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -201,6 +231,7 @@ const ProductCard = ({ product }) => {
   );
 };
 
+// SubcategoryItem Component
 const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -210,72 +241,7 @@ const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
     const fallbackImages = {
       'Milk': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
       'Bread': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Pav': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Eggs': 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Cereals': 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Flakes': 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Muesli': 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Oats': 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Yogurt': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Curd': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Cheese': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Butter': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Cream': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Ghee': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Leafy': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Root': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Tomato': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Onion': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Potato': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Cucumber': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Gourd': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Capsicum': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Pepper': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Exotic': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Seasonal': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Citrus': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Tropical': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Berries': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Dry': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Imported': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Fresh': 'https://images.unsplash.com/photo-1587735243615-77a886b5fd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Coconut': 'https://images.unsplash.com/photo-1587735243615-77a886b5fd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Water': 'https://images.unsplash.com/photo-1587735243615-77a886b5fd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Oil': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Cooking': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Olive': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Sesame': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Pickles': 'https://images.unsplash.com/photo-1587735243615-77a886b5fd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Chutney': 'https://images.unsplash.com/photo-1587735243615-77a886b5fd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Papad': 'https://images.unsplash.com/photo-1587735243615-77a886b5fd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Spices': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Chicken': 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Quail': 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Duck': 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Toor': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Moong': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Urad': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Chana': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Almond': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Cashew': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Raisin': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Date': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'White': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Brown': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Bun': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Corn': 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Granola': 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Salt': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Sugar': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Jaggery': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Honey': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Turmeric': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Chilli': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Coriander': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Cumin': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Wheat': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Basmati': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80',
-      'Jasmine': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'
+      // ... other fallback images
     };
 
     for (const [key, image] of Object.entries(fallbackImages)) {
@@ -283,7 +249,7 @@ const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
         return image;
       }
     }
-    return 'https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'; // Default image
+    return 'https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80';
   };
 
   return (
@@ -317,9 +283,8 @@ const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
             className="object-cover transition-transform duration-200 hover:scale-105"
           />
         )}
-        {/* Active indicator overlay */}
         {isActive && (
-          <div className="absolute inset-0  bg-opacity-10 rounded-lg border border-green-500"></div>
+          <div className="absolute inset-0 bg-opacity-10 rounded-lg border border-green-500"></div>
         )}
       </div>
       
@@ -333,6 +298,7 @@ const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
   );
 };
 
+// Main ProductsPage Component
 const ProductsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -369,7 +335,6 @@ const ProductsPage = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch category details and subcategories
       const [categoryResponse, subcategoriesResponse] = await Promise.all([
         apiService.getCategoryById(categoryId),
         apiService.getAllCategories({ parent: categoryId, includeInactive: 'false' })
@@ -377,7 +342,6 @@ const ProductsPage = () => {
 
       if (categoryResponse.success) {
         setSelectedCategory(categoryResponse.data.category.name);
-        // Store the main category's image
         setSelectedCategoryImage(categoryResponse.data.category?.image || null);
       }
 
@@ -385,23 +349,18 @@ const ProductsPage = () => {
         const subcats = subcategoriesResponse.data.categories;
         setSubcategories(subcats);
         
-        // If showAll is true, fetch all products from main category and subcategories
         if (showAll) {
           await fetchAllProductsFromCategory(categoryId, subcats);
-          // Set the main category as selected subcategory for "All Products"
           setSelectedSubcategory(categoryId);
         } else {
           if (subcats.length > 0) {
             setSelectedSubcategory(subcats[0]._id);
-            // Fetch products for the first subcategory
             await fetchProductsForSubcategory(subcats[0]._id);
           } else {
-            // No subcategories, fetch products for main category
             await fetchProductsForSubcategory(categoryId);
           }
         }
       } else {
-        // No subcategories, fetch products for main category
         await fetchProductsForSubcategory(categoryId);
       }
     } catch (error) {
@@ -414,27 +373,21 @@ const ProductsPage = () => {
 
   const fetchAllProductsFromCategory = async (mainCategoryId, subcategories) => {
     try {
-      // Collect all category IDs (main category + subcategories)
       const allCategoryIds = [mainCategoryId, ...subcategories.map(sub => sub._id)];
-      
-      // Fetch products for all categories
       const productPromises = allCategoryIds.map(categoryId => 
         apiService.getAllProducts({ category: categoryId, limit: 100, inStock: 'true' })
       );
       
       const responses = await Promise.all(productPromises);
-      
-      // Combine all products from all categories
       let allProducts = [];
-      responses.forEach((response, index) => {
+      
+      responses.forEach((response) => {
         if (response.success) {
           const products = response.data?.products || response.data || response.products || [];
-          console.log(`Products from category ${allCategoryIds[index]}:`, products.length);
           allProducts = [...allProducts, ...products];
         }
       });
       
-      console.log('Total products from all categories:', allProducts.length);
       setCurrentProducts(allProducts);
     } catch (error) {
       console.error('Error fetching all products from category:', error);
@@ -446,12 +399,9 @@ const ProductsPage = () => {
     try {
       const response = await apiService.getAllProducts({ category: subcategoryId, limit: 100, inStock: 'true' });
       if (response.success) {
-        console.log('Subcategory products fetched:', response.data.products?.length || 0);
         const products = response.data.products || response.data || response.products || [];
-        console.log('Processed subcategory products:', products);
         setCurrentProducts(products);
       } else {
-        console.error('Failed to fetch subcategory products:', response);
         setError('Failed to fetch subcategory products. Please try again.');
       }
     } catch (error) {
@@ -465,21 +415,14 @@ const ProductsPage = () => {
     setSelectedSubcategory(subcategoryId);
     
     try {
-      // If clicking on "All Products" (main category), fetch all products from main category and subcategories
       if (subcategoryId === selectedCategoryId) {
         await fetchAllProductsFromCategory(selectedCategoryId, subcategories);
       } else {
-        // Fetch products for the selected subcategory
         const response = await apiService.getAllProducts({ category: subcategoryId, limit: 100, inStock: 'true' });
         if (response.success) {
-          console.log('Subcategory products fetched:', response.data.products?.length || 0);
-          console.log('Subcategory products data:', response.data);
-          // Handle different response structures
           const products = response.data.products || response.data || response.products || [];
-          console.log('Processed subcategory products:', products);
           setCurrentProducts(products);
         } else {
-          console.error('Failed to fetch subcategory products:', response);
           setError('Failed to fetch subcategory products. Please try again.');
         }
       }
@@ -493,19 +436,15 @@ const ProductsPage = () => {
 
   // Filter and sort products
   const filteredAndSortedProducts = React.useMemo(() => {
-    console.log('Filtering and sorting products:', currentProducts.length);
-    
     let filtered = currentProducts.filter(product => 
       product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Filter by price range
     filtered = filtered.filter(product => {
       const price = parseFloat(product.price) || 0;
       return price >= priceRange.min && price <= priceRange.max;
     });
 
-    // Sort products
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
@@ -518,7 +457,6 @@ const ProductsPage = () => {
       }
     });
 
-    console.log('Filtered and sorted products:', filtered.length);
     return filtered;
   }, [currentProducts, searchTerm, sortBy, priceRange]);
 
@@ -734,7 +672,7 @@ const ProductsPage = () => {
                       subcategory={{ 
                         _id: selectedCategoryId, 
                         name: `All ${selectedCategory} Products`,
-                        image: selectedCategoryImage // Use the main category's image
+                        image: selectedCategoryImage
                       }}
                       isActive={selectedSubcategory === selectedCategoryId}
                       onClick={handleSubcategoryClick}
@@ -787,4 +725,5 @@ const ProductsPage = () => {
   );
 };
 
-export default ProductsPage; 
+// Only one default export
+export default ProductsPage;

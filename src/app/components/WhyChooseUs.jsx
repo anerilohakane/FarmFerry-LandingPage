@@ -9,9 +9,12 @@ export default function NewLaunches() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [addedToCart, setAddedToCart] = useState({}); // Track which products were just added
-
-  const { addToCart, isInCart, getItemQuantity } = useCart();
+  const [addedToCart, setAddedToCart] = useState({});
+  
+  // Destructure cart context properly
+  const { cart, addToCart: contextAddToCart, loading: cartLoading } = useCart();
+  
+  const timeoutRef = useRef({});
 
   const scrollerRef = useRef(null);
   const animationRef = useRef(null);
@@ -22,17 +25,48 @@ export default function NewLaunches() {
   const dragStartX = useRef(0);
   const dragStartScroll = useRef(0);
 
-  // Handle add to cart with visual feedback
-  const handleAddToCart = (product) => {
-    addToCart(product);
-    
-    // Show visual feedback
-    setAddedToCart(prev => ({ ...prev, [product._id]: true }));
-    
-    // Hide feedback after 2 seconds
-    setTimeout(() => {
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(timeoutRef.current).forEach(clearTimeout);
+    };
+  }, []);
+
+  // Helper functions to check if item is in cart and get quantity
+  const isInCart = (productId) => {
+    return cart.some(item => item._id === productId);
+  };
+
+  const getItemQuantity = (productId) => {
+    const item = cart.find(item => item._id === productId);
+    return item ? (item.qty || item.quantity || 0) : 0;
+  };
+
+  // Handle add to cart with visual feedback - FIXED
+  const handleAddToCart = async (product) => {
+    try {
+      // Prevent multiple clicks
+      if (addedToCart[product._id] || cartLoading) return;
+      
+      // Show visual feedback immediately
+      setAddedToCart(prev => ({ ...prev, [product._id]: true }));
+      
+      // Call the addToCart function from context
+      await contextAddToCart(product);
+      
+      // Store timeout for cleanup
+      timeoutRef.current[product._id] = setTimeout(() => {
+        setAddedToCart(prev => ({ ...prev, [product._id]: false }));
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+      // Remove visual feedback if there's an error
       setAddedToCart(prev => ({ ...prev, [product._id]: false }));
-    }, 2000);
+      
+      // Show error message to user
+      alert('Failed to add item to cart. Please try again.');
+    }
   };
 
   // Fetch products with offers
@@ -42,30 +76,19 @@ export default function NewLaunches() {
         setLoading(true);
         setError(null);
         const response = await apiService.getProductsWithOffers({
-          limit: 20 // Fetch more to filter client-side
+          limit: 20
         });
         
-        console.log('Raw API response:', response);
-        
         if (response?.data?.products) {
-          // Additional client-side filtering to ensure only products with offers
           const productsWithOffers = response.data.products.filter(product => {
             const hasValidOffer = product.hasActiveOffer && 
                                  (product.offerPercentage > 0 || 
                                   (product.discountedPrice && product.discountedPrice < product.price));
             
-            console.log(`Product ${product.name}:`, {
-              hasActiveOffer: product.hasActiveOffer,
-              offerPercentage: product.offerPercentage,
-              price: product.price,
-              discountedPrice: product.discountedPrice,
-              hasValidOffer
-            });
-            
             return hasValidOffer;
           });
           
-          console.log(`Filtered ${productsWithOffers.length} products with offers from ${response.data.products.length} total products`);
+          console.log(`Filtered ${productsWithOffers.length} products with offers`);
           setProducts(productsWithOffers);
         } else {
           console.log('No products in response:', response);
@@ -74,7 +97,7 @@ export default function NewLaunches() {
       } catch (err) {
         console.error('Error fetching products with offers:', err);
         setError('Failed to load products. Please try again later.');
-        setProducts([]); // Fallback to empty array
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -85,11 +108,10 @@ export default function NewLaunches() {
 
   // Calculate discounted price and format currency
   const formatPrice = (product) => {
-    const originalPrice = product.price;
+    const originalPrice = product.price || 0;
     const discountedPrice = product.discountedPrice || originalPrice;
     const offerPercentage = product.offerPercentage || 0;
     
-    // If there's a discounted price, use it; otherwise calculate from offer percentage
     const finalPrice = discountedPrice < originalPrice ? discountedPrice : 
                       (originalPrice - (originalPrice * offerPercentage / 100));
     
@@ -101,7 +123,7 @@ export default function NewLaunches() {
     };
   };
 
-  // Keep scroll amount in sync for seamless auto-scroll resume
+  // Auto-scroll functionality
   const syncScrollAmount = () => {
     const scroller = scrollerRef.current;
     if (scroller) {
@@ -109,7 +131,6 @@ export default function NewLaunches() {
     }
   };
 
-  // Auto-scroll loop
   const startScrolling = () => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
@@ -173,7 +194,6 @@ export default function NewLaunches() {
     syncScrollAmount();
   };
 
-  // Mouse leave should also resume auto-scroll
   const handleMouseLeave = () => {
     if (dragging) {
       setDragging(false);
@@ -184,7 +204,6 @@ export default function NewLaunches() {
     }
   };
 
-  // Prevent default drag image
   const handleDragStart = e => e.preventDefault();
 
   const redirectToPlayStore = () => {
@@ -210,10 +229,7 @@ export default function NewLaunches() {
           onTouchEnd={handleUserScrollEnd}
           onMouseLeave={handleMouseLeave}
           onScroll={handleScroll}
-          
-          // Pause auto-scroll when cursor is over the slider
           onMouseEnter={() => setIsScrolling(false)}
-
           style={{
             cursor: dragging ? 'grabbing' : 'grab',
             userSelect: 'none',
@@ -223,7 +239,6 @@ export default function NewLaunches() {
           draggable={false}
         >
           {loading ? (
-            // Loading skeleton
             Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={`loading-${index}`}
@@ -264,10 +279,12 @@ export default function NewLaunches() {
               </div>
             </div>
           ) : (
-            // Duplicate products for infinite scroll effect
             [...products, ...products].map((product, index) => {
               const pricing = formatPrice(product);
               const isAdded = addedToCart[product._id];
+              const itemInCart = isInCart(product._id);
+              const itemQuantity = getItemQuantity(product._id);
+              
               return (
                 <div
                   key={`${product._id}-${index}`}
@@ -275,11 +292,11 @@ export default function NewLaunches() {
                   onDragStart={handleDragStart}
                 >
                   {/* Offer Badge */}
-                  {(product.offerPercentage > 0 || (product.discountedPrice && product.discountedPrice < product.price)) && (
+                  {(product.offerPercentage > 0 || (product.discountedPrice && product.discountedPrice < (product.price || 0))) && (
                     <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
                       {product.offerPercentage > 0 
                         ? `${Math.round(product.offerPercentage)}% OFF`
-                        : `₹${Math.round(product.price - product.discountedPrice)} OFF`
+                        : `₹${Math.round((product.price || 0) - (product.discountedPrice || 0))} OFF`
                       }
                     </div>
                   )}
@@ -293,7 +310,7 @@ export default function NewLaunches() {
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       draggable={false}
                       onError={(e) => {
-                        e.target.src = '/images/explore/tomato.png'; // Fallback image
+                        e.target.src = '/images/explore/tomato.png';
                       }}
                     />
                   </div>
@@ -319,24 +336,24 @@ export default function NewLaunches() {
 
                     <div className="mt-3 flex justify-between items-center">
                       <span className="text-xs text-gray-600">
-                        Stock: {product.stockQuantity}
+                        Stock: {product.stockQuantity || 0}
                       </span>
                       <div className="flex items-center gap-2">
-                        {isInCart(product._id) && (
+                        {itemInCart && (
                           <span className="text-xs text-green-600 font-medium">
-                            {getItemQuantity(product._id)} in cart
+                            {itemQuantity} in cart
                           </span>
                         )}
                         <button
                           className={`p-1.5 rounded-full transition-all duration-300 ${
                             isAdded 
                               ? 'bg-green-500 text-white scale-110' 
-                              : isInCart(product._id)
+                              : itemInCart
                               ? 'bg-green-700 text-white hover:bg-green-800'
                               : 'bg-green-600 text-white hover:bg-green-700'
-                          }`}
+                          } ${cartLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                           onClick={() => handleAddToCart(product)}
-                          disabled={isAdded}
+                          disabled={isAdded || cartLoading}
                         >
                           {isAdded ? (
                             <Check size={14} />
