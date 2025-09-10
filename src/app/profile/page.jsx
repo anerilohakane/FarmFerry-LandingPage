@@ -1,419 +1,572 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { User, MapPin, Gift, HelpCircle, Shield, LogOut, ArrowRight, Package, Clock, CheckCircle, Plus, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import {
+  User,
+  MapPin,
+  Gift,
+  HelpCircle,
+  Shield,
+  LogOut,
+  ArrowRight,
+  Package,
+  Edit,
+  Trash2,
+  Plus,
+  Loader,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Star,
+  Calendar,
+  Truck,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '../../context/AuthContext';
+import AddressList from '../components/AddressList';
+import FarmFerryFAQ from '../components/FarmFerryFAQ';
+import AccountPrivacy from '../components/AccountPrivacy';
 
+// Account items for sidebar
 const accountItems = [
   { id: 'orders', label: 'My Orders', icon: Package },
   { id: 'addresses', label: 'Saved Addresses', icon: MapPin },
-  { id: 'gift-cards', label: 'E-Gift Cards', icon: Gift },
   { id: 'faqs', label: "FAQ'S", icon: HelpCircle },
   { id: 'privacy', label: 'Account Privacy', icon: Shield },
 ];
 
-const MyAccount = () => {
-  const { user, logout } = useAuth();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const section = searchParams.get('section') || 'orders'; // Default to 'orders'
-  const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-  const [newAddress, setNewAddress] = useState({
-    type: 'Home',
-    flat: '',
-    floor: '',
-    area: '',
-    landmark: '',
-    name: '',
-    phone: '',
-  });
+const Base_Url = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // Mock data for orders and addresses (replace with actual data from your backend)
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD123',
-      date: '2025-08-25',
-      total: 599.50,
-      status: 'Delivered',
-      items: [
-        { name: 'Fresh Tomatoes', qty: 2, price: 99.50 },
-        { name: 'Organic Apples', qty: 1, price: 400.00 },
-      ],
-    },
-    {
-      id: 'ORD124',
-      date: '2025-08-20',
-      total: 249.75,
-      status: 'Shipped',
-      items: [
-        { name: 'Spinach Bundle', qty: 1, price: 249.75 },
-      ],
-    },
-  ]);
+const getToken = () => {
+  try {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') {
+      return null;
+    }
 
-  const [addresses, setAddresses] = useState([
-    {
-      id: '1',
-      type: 'Home',
-      address: 'Parner Bhavan, 302, 3rd floor, Parner Bhavan, Parner Taluka Mitra Mandal Hostel, Dattraj Colony, Mangal Nagar, Wakad, Pimpri Chinchwad, Maharashtra',
-      isDefault: true,
-    },
-  ]);
+    const savedTokens = localStorage.getItem('farmferry-tokens');
+    if (!savedTokens) return null;
 
-  const handleAddNewAddress = () => {
-    setShowAddAddressForm(true);
-  };
+    const parsedTokens = JSON.parse(savedTokens);
+    return parsedTokens?.accessToken;
+  } catch (err) {
+    console.error('Error getting token:', err);
+    return null;
+  }
+};
 
-  const handleSaveAddress = () => {
-    if (!newAddress.flat || !newAddress.area || !newAddress.name) {
-      alert('Please fill in all required fields (Flat/House, Area, Name).');
+const ToastNotification = ({ message, type = 'success', onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 animate-slideInRight`}>
+      <div className={`flex items-center p-4 rounded-lg shadow-lg border ${type === 'success'
+          ? 'bg-green-50 border-green-200 text-green-800'
+          : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+        {type === 'success' ? (
+          <CheckCircle size={20} className="mr-2 text-green-600" />
+        ) : (
+          <AlertCircle size={20} className="mr-2 text-red-600" />
+        )}
+        <span className="font-medium">{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 text-gray-500 hover:text-gray-700"
+        >
+          <XCircle size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const OrdersList = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setLoading(false);
       return;
     }
 
-    const fullAddress = `${newAddress.flat}, ${newAddress.floor && `Floor ${newAddress.floor},`} ${newAddress.area}, ${newAddress.landmark && `Near ${newAddress.landmark},`} Pune, Maharashtra`;
-    
-    const newAddressObj = {
-      id: `addr-${Date.now()}`,
-      type: newAddress.type,
-      address: fullAddress,
-      isDefault: addresses.length === 0, // Set as default if it's the first address
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const token = getToken();
+
+        if (!token) {
+          setError('Please log in to view your orders');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${Base_Url}/orders/my-orders`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+
+        const res = await response.json();
+        const data = res.data.orders;
+
+        let ordersData = [];
+        if (Array.isArray(data)) {
+          ordersData = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          ordersData = data.data;
+        } else if (data.orders && Array.isArray(data.orders)) {
+          ordersData = data.orders;
+        } else if (data.result && Array.isArray(data.result)) {
+          ordersData = data.result;
+        }
+
+        setOrders(ordersData);
+
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching orders:', err);
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    setAddresses([...addresses, newAddressObj]);
-    setNewAddress({
-      type: 'Home',
-      flat: '',
-      floor: '',
-      area: '',
-      landmark: '',
-      name: '',
-      phone: '',
-    });
-    setShowAddAddressForm(false);
-    router.push('/profile?section=addresses'); // Redirect back to addresses section
+
+    fetchOrders();
+  }, []);
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order? This action cannot be undone.')) return;
+
+    setCancellingId(orderId);
+    try {
+      const token = getToken();
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${Base_Url}/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: 'cancelled',
+          cancellationReason: 'Cancelled by customer'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to cancel order');
+      }
+
+      // Update the order status locally
+      setOrders(prev => prev.map(order =>
+        order._id === orderId
+          ? { ...order, status: 'cancelled' }
+          : order
+      ));
+
+      // Show success toast
+      setToast({
+        show: true,
+        message: 'Order cancelled successfully!',
+        type: 'success'
+      });
+
+    } catch (err) {
+      console.error('Error cancelling order:', err);
+
+      // Show error toast
+      setToast({
+        show: true,
+        message: err.message || 'Failed to cancel order. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setCancellingId(null);
+    }
   };
 
-  const renderAddAddressForm = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b pb-3">
+  const toggleOrderDetails = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'delivered':
+        return <CheckCircle size={16} className="text-green-600" />;
+      case 'pending':
+        return <Loader size={16} className="animate-spin text-yellow-600" />;
+      case 'cancelled':
+        return <XCircle size={16} className="text-red-600" />;
+      default:
+        return <Truck size={16} className="text-blue-600" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-200 p-6">
+        <Loader size={48} className="animate-spin text-green-600 mb-4" />
+        <span className="text-gray-600 text-lg">Loading your orders...</span>
+        <p className="text-gray-400 mt-2">This will just take a moment</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md mx-auto">
+        <div className="flex items-center mb-4">
+          <AlertCircle size={24} className="text-red-600 mr-3" />
+          <h3 className="text-red-800 font-medium text-lg">Error loading orders</h3>
+        </div>
+        <p className="text-red-600 mb-4">{error}</p>
         <button
-          onClick={() => setShowAddAddressForm(false)}
-          className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition hover:text-gray-700"
-          aria-label="Go back"
+          onClick={() => window.location.reload()}
+          className="w-full bg-red-600 text-white px-4 py-3 rounded-lg text-sm hover:bg-red-700 transition-colors"
         >
-          <ArrowLeft size={20} />
+          Try Again
         </button>
-        <h3 className="text-lg font-semibold text-gray-800">Enter complete address</h3>
-        <div className="w-8"></div> {/* Spacer for alignment */}
       </div>
-      
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="text-center py-16 px-4 bg-white rounded-xl border border-gray-200">
+        <div className="bg-green-50 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+          <Package size={48} className="text-green-600" />
+        </div>
+        <h3 className="text-2xl font-semibold text-gray-800 mb-3">No orders yet</h3>
+        <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          Your orders will appear here once you make a purchase. Start exploring our fresh products!
+        </p>
+        <Link
+          href="/products"
+          className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg transition-colors shadow-sm hover:shadow-md"
+        >
+          Start Shopping
+          <ArrowRight size={18} className="ml-2" />
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Toast Notification */}
+      {toast.show && (
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ show: false, message: '', type: 'success' })}
+        />
+      )}
+
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-green-800 flex items-center">
+          <Package size={24} className="text-green-600 mr-2" />
+          My Orders
+        </h2>
+        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+          {orders.length} order{orders.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
       <div className="space-y-4">
-        <div className="flex gap-2">
-          {['Home', 'Work', 'Hotel', 'Other'].map(type => (
-            <button
-              key={type}
-              onClick={() => setNewAddress({...newAddress, type})}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${newAddress.type === type ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+        {orders.map((order) => (
+          <div key={order._id} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow bg-white">
+            <div
+              className="flex justify-between items-start cursor-pointer"
+              onClick={() => toggleOrderDetails(order._id)}
             >
-              {type}
-            </button>
-          ))}
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Flat / House no / Building name *</label>
-          <input
-            type="text"
-            value={newAddress.flat}
-            onChange={(e) => setNewAddress({...newAddress, flat: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="e.g. 302, Parner Bhavan"
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Floor (optional)</label>
-          <input
-            type="text"
-            value={newAddress.floor}
-            onChange={(e) => setNewAddress({...newAddress, floor: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="e.g. 3rd floor"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Area / Sector / Locality *</label>
-          <input
-            type="text"
-            value={newAddress.area}
-            onChange={(e) => setNewAddress({...newAddress, area: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="e.g. Wakad, Pune"
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nearby landmark (optional)</label>
-          <input
-            type="text"
-            value={newAddress.landmark}
-            onChange={(e) => setNewAddress({...newAddress, landmark: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="e.g. Near Wakad Bridge"
-          />
-        </div>
-        
-        <div className="pt-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Enter your details for seamless delivery experience</h4>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Your name *</label>
-            <input
-              type="text"
-              value={newAddress.name}
-              onChange={(e) => setNewAddress({...newAddress, name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Your name"
-              required
-            />
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <p className="font-semibold text-gray-800">Order #{order.orderId}</p>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${order.status === 'delivered'
+                    ? 'bg-green-100 text-green-800'
+                    : order.status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : order.status === 'cancelled'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                    {getStatusIcon(order.status)}
+                    {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Processing'}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm flex items-center">
+                  <Calendar size={14} className="mr-1.5" />
+                  Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </p>
+              </div>
+              <div className="ml-4">
+                {expandedOrder === order._id ? (
+                  <ChevronUp size={20} className="text-gray-500" />
+                ) : (
+                  <ChevronDown size={20} className="text-gray-500" />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-between items-center">
+              <div>
+                <p className="text-gray-600 text-sm">{order.items.length} item{order.items.length > 1 ? 's' : ''}</p>
+                <p className="text-sm text-gray-500 flex items-center">
+                  <Truck size={14} className="mr-1.5" />
+                  Est. delivery: {new Date(order.estimatedDeliveryDate).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short'
+                  })}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-gray-600 text-sm">Total Amount</p>
+                <p className="font-bold text-lg text-green-700">₹{order.totalAmount?.toFixed(2)}</p>
+              </div>
+            </div>
+
+            {expandedOrder === order._id && (
+              <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn">
+                <h4 className="font-medium text-gray-700 mb-3">Order Details</h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">Items</h5>
+                    <ul className="space-y-2">
+                      {order.items.map((item, index) => (
+                        <li key={index} className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            {item.quantity} × {item.product?.name || 'Product'}
+                          </span>
+                          <span className="font-medium">
+                            ₹{((item.discountedPrice || item.price) * item.quantity).toFixed(2)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">Delivery Address</h5>
+                    {order.deliveryAddress ? (
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium">{order.deliveryAddress.name}</p>
+                        <p>{order.deliveryAddress.street}</p>
+                        <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.postalCode}</p>
+                        <p className="mt-1">{order.deliveryAddress.phone}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">Address not available</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                  {order.status === 'delivered' && (
+                    <button className="bg-blue-600 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center">
+                      <Star size={16} className="mr-1.5" />
+                      Rate Order
+                    </button>
+                  )}
+                  {order.status === 'pending' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelOrder(order._id);
+                      }}
+                      disabled={cancellingId === order._id}
+                      className="text-red-600 hover:text-red-800 font-medium text-sm px-4 py-2 border border-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {cancellingId === order._id ? (
+                        <>
+                          <Loader size={16} className="animate-spin mr-1.5 inline" />
+                          Cancelling...
+                        </>
+                      ) : (
+                        'Cancel Order'
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Your phone number (optional)</label>
-            <input
-              type="tel"
-              value={newAddress.phone}
-              onChange={(e) => setNewAddress({...newAddress, phone: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Phone number"
-            />
-          </div>
-        </div>
+        ))}
       </div>
-      
-      <button
-        onClick={handleSaveAddress}
-        disabled={!newAddress.flat || !newAddress.area || !newAddress.name}
-        className={`w-full ${(!newAddress.flat || !newAddress.area || !newAddress.name) ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md`}
-      >
-        Save Address
-      </button>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+          from { 
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to { 
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .animate-slideInRight {
+          animation: slideInRight 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
+};
+// Logout function
+const logout = () => {
+  localStorage.removeItem('farmferry-tokens');
+  window.location.href = '/';
+};
 
-  const renderSectionContent = () => {
-    if (section === 'addresses' && showAddAddressForm) {
-      return renderAddAddressForm();
+const MyAccount = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [activeSection, setActiveSection] = useState('orders');
+
+  // Read section from URL on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const section = urlParams.get('section');
+      if (section && accountItems.some(item => item.id === section)) {
+        setActiveSection(section);
+      }
     }
+  }, []);
 
-    switch (section) {
-      case 'orders':
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">My Orders</h3>
-            {orders.length === 0 ? (
-              <div className="text-center py-8">
-                <Package size={48} className="text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">You haven't placed any orders yet.</p>
-                <Link href="/products" className="text-green-600 hover:underline mt-2 inline-block">
-                  Shop Now
-                </Link>
-              </div>
-            ) : (
-              orders.map(order => (
-                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <div>
-                      <div className="font-medium text-gray-800">Order #{order.id}</div>
-                      <div className="text-sm text-gray-600 flex items-center gap-2">
-                        <Clock size={14} /> {order.date}
-                      </div>
-                    </div>
-                    <div className="text-green-600 font-medium flex items-center gap-2">
-                      <CheckCircle size={16} /> {order.status}
-                    </div>
-                  </div>
-                  <div className="border-t border-gray-200 pt-3">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex justify-between text-sm text-gray-600 mb-2">
-                        <span>{item.name} x {item.qty}</span>
-                        <span>₹{item.price.toFixed(2)}</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between font-semibold text-gray-800 mt-3">
-                      <span>Total</span>
-                      <span>₹{order.total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        );
+  // Update URL when section changes
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    router.push(`${pathname}?section=${section}`);
+  };
+
+
+  // Section Renderer
+  const renderSectionContent = () => {
+    switch (activeSection) {
       case 'addresses':
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">Saved Addresses</h3>
-            {addresses.length === 0 ? (
-              <div className="text-center py-8">
-                <MapPin size={48} className="text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No saved addresses.</p>
-                <button
-                  onClick={handleAddNewAddress}
-                  className="text-green-600 hover:underline mt-2"
-                >
-                  Add New Address
-                </button>
-              </div>
-            ) : (
-              addresses.map(address => (
-                <div key={address.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-800 flex items-center gap-2">
-                        {address.type}
-                        {address.isDefault && (
-                          <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">Default</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{address.address}</p>
-                    </div>
-                    <button className="text-green-600 hover:underline text-sm">Edit</button>
-                  </div>
-                </div>
-              ))
-            )}
-            <button
-              onClick={handleAddNewAddress}
-              className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-green-500 hover:bg-green-50 transition flex items-center justify-center"
-            >
-              <Plus size={20} className="text-green-600 mr-2" />
-              <span className="text-green-600 font-medium">Add new address</span>
-            </button>
-          </div>
-        );
-      case 'gift-cards':
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">E-Gift Cards</h3>
-            <div className="text-center py-8">
-              <Gift size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No gift cards available.</p>
-              <button className="text-green-600 hover:underline mt-2">Purchase Gift Card</button>
-            </div>
-          </div>
-        );
+        return <AddressList />;
+      case 'orders':
+        return <OrdersList />;
       case 'faqs':
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">FAQ'S</h3>
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-800">How do I track my order?</h4>
-                <p className="text-sm text-gray-600 mt-2">
-                  You can track your order in the "My Orders" section. Select the order to view its status and tracking details.
-                </p>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-800">How can I update my address?</h4>
-                <p className="text-sm text-gray-600 mt-2">
-                  Go to "Saved Addresses" to add, edit, or delete your delivery addresses.
-                </p>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-800">What are the delivery charges?</h4>
-                <p className="text-sm text-gray-600 mt-2">
-                  Delivery charges vary based on your location and order total. Check the cart page for details.
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+        return <FarmFerryFAQ />;
       case 'privacy':
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">Account Privacy</h3>
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-gray-800">Manage Your Data</h4>
-              <p className="text-sm text-gray-600 mt-2">
-                You can manage your personal information, including email, phone number, and addresses, in the respective sections.
-              </p>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-gray-800">Data Sharing</h4>
-              <p className="text-sm text-gray-600 mt-2">
-                We do not share your personal data with third parties without your consent, except as required for order processing.
-              </p>
-            </div>
-            <button className="text-red-600 hover:underline">Delete Account</button>
-          </div>
-        );
+        return <AccountPrivacy />;
       default:
-        return null;
+        return <OrdersList />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-4">
-          <h1 className="text-2xl font-bold text-gray-800">My Account</h1>
-        </div>
-      </header>
+      {/* Add padding-top to account for fixed navbar (approx 80px + some spacing) */}
+      <div className="pt-24">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <h1 className="text-3xl font-bold text-green-800">My Account</h1>
+            <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+          </div>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-8">
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="bg-green-100 p-3 rounded-full">
-              <User size={32} className="text-green-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">{user?.name || 'User'}</h2>
-              <p className="text-gray-600">{user?.phone || '9322506730'}</p>
-              <p className="text-gray-600">{user?.email || 'user@example.com'}</p>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* User Info */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-green-500 to-teal-500 p-4 rounded-full">
+                <User size={36} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Welcome back!
+                </h2>
+                <p className="text-gray-600">Manage your account settings and track your orders</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="md:w-1/3 bg-white rounded-xl shadow-sm p-6">
-            <div className="space-y-4">
-              {accountItems.map(item => (
-                <Link
-                  key={item.id}
-                  href={`/profile?section=${item.id}`}
-                  onClick={() => setShowAddAddressForm(false)} // Reset form visibility when switching sections
-                  className={`flex items-center justify-between p-4 border rounded-lg transition ${
-                    section === item.id && !showAddAddressForm ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
-                  }`}
+          {/* Sidebar + Content */}
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Sidebar */}
+            <div className="lg:w-1/4 bg-white rounded-xl border border-gray-200 p-5 h-fit lg:sticky lg:top-32 shadow-sm">
+              <div className="space-y-2">
+                {accountItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSectionChange(item.id)}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${activeSection === item.id
+                      ? 'bg-green-100 text-green-700 font-medium border border-green-200'
+                      : 'text-gray-700 hover:bg-gray-50 border border-transparent'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon size={20} className={activeSection === item.id ? "text-green-600" : "text-gray-500"} />
+                      <span>{item.label}</span>
+                    </div>
+                    <ArrowRight size={18} className={activeSection === item.id ? "text-green-600" : "text-gray-400"} />
+                  </button>
+                ))}
+
+                <button
+                  onClick={logout}
+                  className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-medium py-3 px-4 rounded-xl flex items-center justify-center transition-colors mt-4 border border-red-100"
                 >
-                  <div className="flex items-center gap-3">
-                    <item.icon size={20} className="text-gray-600" />
-                    <span className="text-gray-800 font-medium">{item.label}</span>
-                  </div>
-                  <ArrowRight size={18} className="text-gray-400" />
-                </Link>
-              ))}
-              <button
-                onClick={logout}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
-              >
-                Log Out
-                <LogOut className="ml-2" size={18} />
-              </button>
+                  <LogOut className="mr-2" size={18} />
+                  Log Out
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="lg:w-3/4 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              {renderSectionContent()}
             </div>
           </div>
+        </main>
+      </div>
 
-          <div className="md:w-2/3 bg-white rounded-xl shadow-sm p-6">
-            {renderSectionContent()}
-          </div>
-        </div>
-      </main>
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
