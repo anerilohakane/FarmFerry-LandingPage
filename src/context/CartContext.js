@@ -24,6 +24,7 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { user, isAuthenticated } = useAuth();
+  const [cartGST, setCartGST] = useState(0);
   const timeoutRefs = useRef({});
 
   // Cleanup timeouts on unmount
@@ -48,6 +49,34 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const getCartGST = () => {
+    // Calculate GST on subtotal instead of individual items
+    const subtotal = getCartTotal();
+    
+    // Get weighted average GST percentage based on item values
+    let totalGSTAmount = 0;
+    
+    cart.forEach(item => {
+      const itemPrice = item.discountedPrice || item.price || 0;
+      const itemQuantity = item.qty || item.quantity || 1;
+      const itemTotal = itemPrice * itemQuantity;
+      
+      // GST % from DB (product level)
+      let gstPercent = 0;
+      if (item.product && typeof item.product === "object") {
+        gstPercent = item.product.gst || 0;
+      } else if (item.gst !== undefined) {
+        gstPercent = item.gst;
+      }
+      
+      // Calculate GST for this item's total
+      const itemGST = (itemTotal * gstPercent) / 100;
+      totalGSTAmount += itemGST;
+    });
+    
+    return totalGSTAmount;
+  };
+
   // Helper function to transform API response to consistent cart format
   const transformCartItems = (items) => {
     return items.map(item => ({
@@ -60,12 +89,14 @@ export const CartProvider = ({ children }) => {
         discountedPrice: item.product?.discountedPrice || item.discountedPrice,
         unit: item.product?.unit || item.unit,
         images: item.product?.images || item.images,
-        stockQuantity: item.product?.stockQuantity || item.stockQuantity
+        stockQuantity: item.product?.stockQuantity || item.stockQuantity,
+        gst: item.product?.gst || item.gst || 0
       },
       qty: item.quantity || item.qty || 1,
       quantity: item.quantity || item.qty || 1,
       price: item.price || item.product?.price,
       discountedPrice: item.discountedPrice || item.product?.discountedPrice,
+      gst: item.product?.gst || item.gst || 0,
       totalPrice: item.totalPrice || (item.price || item.product?.price) * (item.quantity || item.qty || 1)
     }));
   };
@@ -103,6 +134,7 @@ export const CartProvider = ({ children }) => {
         unit: item.product?.unit || item.unit,
         images: item.product?.images || item.images,
         stockQuantity: item.product?.stockQuantity || item.stockQuantity,
+        gst: item.product?.gst || item.gst || 0,
         qty: item.qty || item.quantity,
         cartItemId: item.cartItemId || `local_${Date.now()}_${item._id}`
       }));
@@ -128,12 +160,14 @@ export const CartProvider = ({ children }) => {
             discountedPrice: item.discountedPrice,
             unit: item.unit,
             images: item.images,
-            stockQuantity: item.stockQuantity
+            stockQuantity: item.stockQuantity,
+            gst: item.gst || 0
           },
           qty: item.qty,
           quantity: item.qty,
           price: item.price,
           discountedPrice: item.discountedPrice,
+          gst: item.gst || 0,
           totalPrice: (item.discountedPrice || item.price) * item.qty
         }));
         setCart(transformedCart);
@@ -203,6 +237,11 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
+      // Check if product is out of stock
+      if (product.stockQuantity === 0) {
+        throw new Error('This product is out of stock and cannot be added to cart.');
+      }
+
       const token = getToken();
 
       if (isAuthenticated && token) {
@@ -257,12 +296,14 @@ export const CartProvider = ({ children }) => {
                 discountedPrice: product.discountedPrice,
                 unit: product.unit,
                 images: product.images,
-                stockQuantity: product.stockQuantity
+                stockQuantity: product.stockQuantity,
+                gst: product.gst || 0
               },
               qty: 1,
               quantity: 1,
               price: product.price,
               discountedPrice: product.discountedPrice,
+              gst: product.gst || 0,
               totalPrice: product.discountedPrice || product.price
             }];
           }
@@ -513,27 +554,33 @@ export const CartProvider = ({ children }) => {
       day: 'numeric'
     });
 
-    const isFreeDelivery = itemsTotal >= 300;
-    const deliveryCharge = isFreeDelivery ? 0 : 40;
-    const handlingCharge = 10;
-    const showSmallCartCharge = itemsTotal < 100 && itemsTotal > 0;
-    const smallCartCharge = showSmallCartCharge ? 20 : 0;
+    // Updated pricing structure
+    const isFreeDelivery = itemsTotal >= 500; // Free delivery threshold
+    const deliveryCharge = isFreeDelivery ? 0 : 20; // ₹20 delivery charge
+    const platformFee = 2; // ₹2 platform fee
+    const handlingCharge = 0; // Remove handling charge as requested
+    
+    // GST calculation (18% on platform fee and delivery charge)
+    const taxableAmount = platformFee + (isFreeDelivery ? 0 : deliveryCharge);
+    const gst = getCartGST();
+    //const gst = Math.round(taxableAmount * 0.18 * 100) / 100; // 18% GST, rounded to 2 decimals
 
     return {
       deliveryTime,
       deliveryDate,
       isFreeDelivery,
       deliveryCharge,
+      platformFee,
       handlingCharge,
-      showSmallCartCharge,
-      smallCartCharge
+      gst,
+      taxableAmount
     };
   };
 
   const getGrandTotal = () => {
     const itemsTotal = getCartTotal();
     const charges = getDeliveryCharges();
-    return itemsTotal + charges.deliveryCharge + charges.handlingCharge + charges.smallCartCharge;
+    return itemsTotal + charges.deliveryCharge + charges.platformFee + charges.handlingCharge + charges.gst;
   };
 
   const value = {
@@ -548,6 +595,7 @@ export const CartProvider = ({ children }) => {
     removeFromCart,
     getCartItemCount,
     getCartTotal,
+    getCartGST,
     getDeliveryCharges,
     getGrandTotal,
     clearCart,

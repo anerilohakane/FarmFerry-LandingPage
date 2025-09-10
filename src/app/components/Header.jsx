@@ -69,11 +69,10 @@ const Header = () => {
   ];
 
   const paymentMethods = [
-    { id: 'card', label: 'Credit/Debit Card', icon: CreditCard },
-    { id: 'upi', label: 'UPI Payment', icon: Smartphone },
-    { id: 'wallet', label: 'Wallet', icon: Wallet },
-    { id: 'cod', label: 'Cash on Delivery', icon: Banknote },
+    { id: 'online', label: 'Online Payment', icon: CreditCard },
+    { id: 'cod', label: 'Cash on Delivery', icon: Truck }
   ];
+
   const {
     cart,
     cartOpen,
@@ -83,6 +82,7 @@ const Header = () => {
     removeFromCart,
     getCartItemCount,
     getCartTotal,
+    getCartGST,
     getDeliveryCharges,
     getGrandTotal,
     clearCart
@@ -97,6 +97,7 @@ const Header = () => {
   const [isClosing, setIsClosing] = useState(false);
   const [userClosedCart, setUserClosedCart] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
 
   // Calculate values using the functions from CartContext
@@ -328,6 +329,7 @@ const scrollToSection = useCallback((sectionId) => {
     // Map payment method to backend enum values
     const paymentMethodMap = {
       'cod': 'cash_on_delivery',
+      'online': 'credit_card', // Online payment defaults to credit_card for backend
       'card': 'credit_card',
       'credit_card': 'credit_card',
       'debit_card': 'debit_card',
@@ -351,8 +353,8 @@ const scrollToSection = useCallback((sectionId) => {
       })),
       subtotal: itemsTotal,
       discountAmount: 0,
-      gst: 0,
-      platformFee: charges.handlingCharge,
+      gst: charges.gst,
+      platformFee: charges.platformFee,
       handlingFee: 0,
       deliveryCharge: charges.isFreeDelivery ? 0 : charges.deliveryCharge,
       totalAmount: grandTotal,
@@ -426,14 +428,146 @@ const handleOpenPayment = useCallback(async (orderData) => {
       return;
     }
 
-    // For non-COD payments, you might want to implement actual payment processing
-    alert('Payment integration would be implemented here');
+    // For online payments, use Razorpay
+    if (selectedPayment === 'online') {
+      setIsLoadingPayment(true);
+      try {
+        await handleRazorpayPayment(orderData);
+      } finally {
+        setIsLoadingPayment(false);
+      }
+    } else {
+      // For COD, proceed with direct order creation
+      const orderResponse = await createOrder(orderData);
+      if (orderResponse.success) {
+        setShowOrderConfirmation(true);
+        setCartOpen(false);
+        setCheckoutStep('cart');
+        setSelectedAddress(null);
+        setSelectedPayment('');
+      } else {
+        throw new Error(orderResponse.message || 'Failed to create order');
+      }
+    }
     
   } catch (error) {
     console.error('Error opening payment:', error);
     alert('Failed to initiate payment. Please try again.');
+    setIsLoadingPayment(false);
   }
-}, [isAuthenticated, getToken]);
+}, [isAuthenticated, getToken, selectedPayment, createOrder]);
+
+// Load Razorpay script function
+const loadRazorpayScript = () => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    
+    script.onload = () => {
+      console.log('Razorpay script loaded successfully');
+      resolve();
+    };
+    
+    script.onerror = () => {
+      console.error('Failed to load Razorpay script');
+      reject(new Error('Failed to load Razorpay script'));
+    };
+    
+    document.head.appendChild(script);
+  });
+};
+
+// Razorpay payment handler
+const handleRazorpayPayment = useCallback(async (orderData) => {
+  try {
+    // Load Razorpay script dynamically if not available
+    if (!window.Razorpay) {
+      await loadRazorpayScript();
+    }
+    
+    if (!window.Razorpay) {
+      alert('Payment gateway is currently unavailable. Please try again later or use Cash on Delivery.');
+      return;
+    }
+
+    // Create order first
+    const orderResponse = await createOrder(orderData);
+    if (!orderResponse.success) {
+      throw new Error(orderResponse.message || 'Failed to create order');
+    }
+
+    const createdOrder = orderResponse.data;
+    console.log('Created order:', createdOrder); // Debug log
+    
+    // Generate a unique order reference for Razorpay
+    const orderRef = createdOrder.orderId || createdOrder._id || `FF_${Date.now()}`;
+    
+    // Razorpay configuration
+    const options = {
+      key: 'rzp_test_Sbs1ZuKmKT2RXE', // Your Razorpay test key
+      amount: Math.round((createdOrder.totalAmount || orderData.totalAmount) * 100), // Amount in paise
+      currency: 'INR',
+      name: 'Farm Ferry',
+      description: `Order #${orderRef}`,
+      // Remove order_id as it requires backend Razorpay order creation
+      handler: async (response) => {
+        try {
+          console.log('Payment successful:', response);
+          
+          // Payment successful - show confirmation
+          setShowOrderConfirmation(true);
+          setCartOpen(false);
+          setCheckoutStep('cart');
+          setSelectedAddress(null);
+          setSelectedPayment('');
+          
+          // Clear cart
+          clearCart();
+          
+          alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+        } catch (error) {
+          console.error('Payment success handling error:', error);
+          alert('Payment completed but there was an issue. Please contact support.');
+        }
+      },
+      prefill: {
+        name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+        email: user?.email || '',
+        contact: user?.phone || '',
+      },
+      theme: {
+        color: '#16a34a',
+      },
+      modal: {
+        ondismiss: () => {
+          console.log('Payment modal dismissed');
+          alert('Payment was cancelled');
+        },
+      },
+      method: {
+        netbanking: true,
+        card: true,
+        upi: true,
+        wallet: true,
+        paylater: true,
+        emi: true
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch (error) {
+    console.error('Razorpay payment error:', error);
+    
+    if (error.message.includes('timeout') || error.message.includes('Failed to load')) {
+      alert('Unable to connect to payment gateway. Please check your internet connection and try again.');
+    } else {
+      alert('Failed to initiate payment. Please try again.');
+    }
+  }
+}, [user, clearCart, createOrder]);
 
 
 
@@ -443,8 +577,6 @@ const handleOpenPayment = useCallback(async (orderData) => {
     const itemQty = item.qty || item.quantity || 1;
     const totalPrice = (itemPrice * itemQty).toFixed(2);
     const originalPrice = item.price ? (item.price * itemQty).toFixed(2) : null;
-    console.log('Rendering CartItem:', item);
-    console.log('Item details:', CartItem);
     const imageUrl = item.product?.images?.[0]?.url || '/images/explore/tomato.png';
 
     return (
@@ -617,20 +749,19 @@ const handleOpenPayment = useCallback(async (orderData) => {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1 text-gray-600">
                   <Package size={14} className="text-gray-500" />
-                  <span>Handling</span>
+                  <span>Platform Fee</span>
                 </div>
-                <span>₹{charges.handlingCharge}</span>
+                <span>₹{charges.platformFee}</span>
               </div>
 
-              {charges.showSmallCartCharge && (
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <ShoppingCart size={14} className='text-gray-500' />
-                    <span>Small order</span>
-                  </div>
-                  <span>₹{charges.smallCartCharge}</span>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1 text-gray-600">
+                  <Package size={14} className="text-gray-500" />
+                  <span>GST</span>
                 </div>
-              )}
+                <span>₹{charges.gst.toFixed(2)}</span>
+              </div>
+
 
               <div className="border-t border-gray-200 mt-3 pt-3 flex justify-between items-center">
                 <span className="font-semibold text-gray-700">Total</span>
@@ -786,16 +917,15 @@ const handleOpenPayment = useCallback(async (orderData) => {
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Handling Fee</span>
-              <span>₹{charges.handlingCharge}</span>
+              <span className="text-gray-600">Platform Fee</span>
+              <span>₹{charges.platformFee}</span>
             </div>
 
-            {charges.showSmallCartCharge && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Small Order Charge</span>
-                <span>₹{charges.smallCartCharge}</span>
-              </div>
-            )}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">GST</span>
+              <span>₹{charges.gst.toFixed(2)}</span>
+            </div>
+
 
             <div className="border-t border-gray-200 mt-3 pt-3 flex justify-between items-center">
               <span className="font-semibold text-gray-700">Total Amount</span>
@@ -819,14 +949,19 @@ const handleOpenPayment = useCallback(async (orderData) => {
               handleOpenPayment(prepareOrderData());
             }
           }}
-          disabled={isPlacingOrder}
-          className={`w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md ${isPlacingOrder ? 'opacity-50 cursor-not-allowed' : ''
+          disabled={isPlacingOrder || isLoadingPayment}
+          className={`w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md ${(isPlacingOrder || isLoadingPayment) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
         >
           {isPlacingOrder ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               Processing...
+            </>
+          ) : isLoadingPayment ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Loading Payment Gateway...
             </>
           ) : (
             <>

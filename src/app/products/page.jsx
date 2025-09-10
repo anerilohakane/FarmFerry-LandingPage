@@ -38,6 +38,12 @@ const ProductCard = ({ product }) => {
   };
 
   const handleAddToCart = async () => {
+    // Check if product is out of stock
+    if (product.stockQuantity === 0) {
+      alert('This product is out of stock and cannot be added to cart.');
+      return;
+    }
+    
     setIsAdding(true);
     try {
       await addToCart(product);
@@ -180,14 +186,14 @@ const ProductCard = ({ product }) => {
           {!isInCartItem ? (
             <button 
               onClick={handleAddToCart}
-              disabled={isAdding || cartLoading}
+              disabled={isAdding || cartLoading || product.stockQuantity === 0}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                isAdding || cartLoading
+                isAdding || cartLoading || product.stockQuantity === 0
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
               }`}
             >
-              {isAdding ? 'ADDING...' : 'ADD'}
+              {product.stockQuantity === 0 ? 'OUT OF STOCK' : isAdding ? 'ADDING...' : 'ADD'}
             </button>
           ) : (
             <div className="flex items-center space-x-2 bg-green-50 rounded-md px-2 py-1">
@@ -217,11 +223,17 @@ const ProductCard = ({ product }) => {
         </div>
 
         {/* Stock Info */}
-        <div className="text-xs text-gray-600 mt-2">
-          {product.stockQuantity > 0 ? (
-            <span className="text-green-600">In Stock: {product.stockQuantity}</span>
-          ) : product.stockQuantity === 0 ? (
-            <span className="text-red-500">Out of Stock</span>
+        <div className="text-xs mt-2">
+          {product.stockQuantity === 0 ? (
+            <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+              Out of Stock
+            </span>
+          ) : product.stockQuantity > 0 && product.stockQuantity < 5 ? (
+            <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-medium">
+              Only {product.stockQuantity} left
+            </span>
+          ) : product.stockQuantity >= 5 ? (
+            <span className="text-green-600">In Stock</span>
           ) : (
             <span className="text-gray-500">Stock: Available</span>
           )}
