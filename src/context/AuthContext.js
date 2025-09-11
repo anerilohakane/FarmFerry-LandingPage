@@ -232,6 +232,64 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Send login OTP to phone
+  const sendLoginOtp = async (phone) => {
+    try {
+      setLoading(true);
+      const response = await apiService.sendLoginOtp(phone);
+      
+      if (response.success) {
+        return {
+          success: true,
+          message: response.message
+        };
+      } else {
+        throw new Error(response.message || 'Failed to send OTP');
+      }
+    } catch (error) {
+      console.error('Send login OTP error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login with phone OTP
+  const loginWithPhoneOtp = async (phone, otp) => {
+    try {
+      setLoading(true);
+      const response = await apiService.loginWithPhoneOtp(phone, otp);
+      
+      if (response.success) {
+        const { customer, accessToken, refreshToken } = response.data;
+        
+        // Login successful
+        setUser(customer);
+        setTokens({ accessToken, refreshToken });
+        setIsAuthenticated(true);
+        
+        return {
+          success: true,
+          user: customer,
+          message: response.message
+        };
+      } else {
+        throw new Error(response.message || 'OTP verification failed');
+      }
+    } catch (error) {
+      console.error('Phone OTP login error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Logout
   const logout = async () => {
     try {
@@ -321,6 +379,8 @@ export const AuthProvider = ({ children }) => {
     verifyPhoneOTP,
     forgotPassword,
     resetPassword,
+    sendLoginOtp,
+    loginWithPhoneOtp,
     getCurrentUser,
     refreshAccessToken
   };

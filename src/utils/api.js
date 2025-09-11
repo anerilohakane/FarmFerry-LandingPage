@@ -99,6 +99,39 @@ class ApiService {
     return this.request('/auth/current-user');
   }
 
+  // Phone OTP Login APIs
+  async sendLoginOtp(phone) {
+    try {
+      const response = await this.request('/auth/send-customer-otp', {
+        method: 'POST',
+        body: JSON.stringify({ phone }),
+      });
+      return response;
+    } catch (error) {
+      console.error('Send login OTP error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to send OTP'
+      };
+    }
+  }
+
+  async loginWithPhoneOtp(phone, otp) {
+    try {
+      const response = await this.request('/auth/login/customer-otp', {
+        method: 'POST',
+        body: JSON.stringify({ phone, otp }),
+      });
+      return response;
+    } catch (error) {
+      console.error('Login with phone OTP error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to verify OTP'
+      };
+    }
+  }
+
   // Category APIs
   async getAllCategories(params = {}) {
     const queryString = new URLSearchParams(params).toString();
