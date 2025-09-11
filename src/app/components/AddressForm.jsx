@@ -42,6 +42,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
       if (res.ok) {
         alert("✅ Address saved successfully!");
         setNewAddress({
+          name: "",
           type: "home",
           street: "",
           city: "",
@@ -99,11 +100,10 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
               <button
                 key={type}
                 onClick={() => setNewAddress({ ...newAddress, type })}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                  newAddress.type === type
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${newAddress.type === type
                     ? 'bg-green-100 text-green-800 border border-green-300 shadow-sm'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
-                }`}
+                  }`}
               >
                 {addressTypeIcons[type]}
                 {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -201,6 +201,26 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
           </div>
         </div>
 
+
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Full Name *
+          </label>
+          <input
+            type="text"
+            value={newAddress.name}
+            onChange={(e) =>
+              setNewAddress({ ...newAddress, name: e.target.value })
+            }
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+               focus:outline-none focus:ring-2 focus:ring-green-500 
+               focus:border-transparent transition"
+            placeholder="Enter recipient name"
+            required
+          />
+        </div>
+
         {/* Phone */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -255,16 +275,15 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
             !newAddress.country ||
             isSubmitting
           }
-          className={`flex-1 px-4 py-3 font-medium rounded-lg transition ${
-            !newAddress.street ||
-            !newAddress.city ||
-            !newAddress.state ||
-            !newAddress.postalCode ||
-            !newAddress.country ||
-            isSubmitting
+          className={`flex-1 px-4 py-3 font-medium rounded-lg transition ${!newAddress.street ||
+              !newAddress.city ||
+              !newAddress.state ||
+              !newAddress.postalCode ||
+              !newAddress.country ||
+              isSubmitting
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-green-600 hover:bg-green-700 text-white shadow-md'
-          }`}
+            }`}
         >
           {isSubmitting ? (
             <div className="flex items-center justify-center">
