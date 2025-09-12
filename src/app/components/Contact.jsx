@@ -85,31 +85,31 @@ export default function Contact() {
   ]
 
   return (
-    <section id="contact" className="relative py-5 px-4 sm:px-6 lg:px-20 bg-grey-100 overflow-hidden">
+    <section id="contact" className="relative py-8 px-4 sm:px-6 lg:px-8 bg-grey-100 overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -right-20 w-64 h-64 bg-green-400/10 rounded-full filter blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-green-400/10 rounded-full filter blur-3xl"></div>
+        <div className="absolute -top-20 -right-20 w-48 sm:w-64 h-48 sm:h-64 bg-green-400/10 rounded-full filter blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 sm:w-72 h-48 sm:h-72 bg-green-400/10 rounded-full filter blur-3xl"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-3xl font-bold text-gray-900 mb-6">
+      <div className="w-full mx-auto relative z-10">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-bold text-gray-900 mb-6">
             Let's <span className="text-green-800">Connect</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
             Partner with Farm Ferry to bring fresh produce to communities nationwide
           </p>
         </div>
 
         {error && (
-          <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-lg text-center">
+          <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-lg text-center text-sm sm:text-base">
             {error}
           </div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
               <span className="w-8 h-8 rounded-md bg-green-800 flex items-center justify-center text-white">
                 <ArrowRight className="w-4 h-4" />
               </span>
@@ -127,8 +127,8 @@ export default function Contact() {
                       <item.icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-1">{item.title}</h4>
-                      <p className="text-gray-600 whitespace-pre-line">{item.value}</p>
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">{item.title}</h4>
+                      <p className="text-gray-600 text-sm sm:text-base whitespace-pre-line">{item.value}</p>
                     </div>
                   </div>
                 </div>
@@ -136,19 +136,19 @@ export default function Contact() {
             </div>
 
             <div className="mt-8 p-6 bg-green-50 rounded-xl border border-green-100">
-              <h4 className="text-lg font-semibold text-gray-900 mb-3">Business Hours</h4>
-              <p className="text-gray-600 mb-2">Monday - Friday: 8am - 6pm</p>
-              <p className="text-gray-600">Saturday: 9am - 2pm</p>
-              <p className="text-gray-600">Sunday: Closed</p>
+              <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Business Hours</h4>
+              <p className="text-gray-600 mb-2 text-sm sm:text-base">Monday - Friday: 8am - 6pm</p>
+              <p className="text-gray-600 text-sm sm:text-base">Saturday: 9am - 2pm</p>
+              <p className="text-gray-600 text-sm sm:text-base">Sunday: Closed</p>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            <div className="p-8 sm:p-10">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Partner with Farm Ferry</h3>
+            <div className="p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">Partner with Farm Ferry</h3>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                     <input
@@ -158,7 +158,7 @@ export default function Contact() {
                       placeholder="Your name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400"
+                      className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 text-sm sm:text-base"
                       required
                     />
                   </div>
@@ -171,7 +171,7 @@ export default function Contact() {
                       placeholder="your@email.com"
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400"
+                      className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 text-sm sm:text-base"
                       required
                     />
                   </div>
@@ -186,7 +186,7 @@ export default function Contact() {
                     placeholder="Your phone number"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400"
+                    className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function Contact() {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none text-gray-900"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none text-gray-900 text-sm sm:text-base"
                     required
                   >
                     <option value="" disabled className="text-gray-400">
@@ -220,7 +220,7 @@ export default function Contact() {
                     value={formData.message}
                     onChange={handleChange}
                     rows="5"
-                    className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 resize-none text-sm sm:text-base"
                     required
                   ></textarea>
                 </div>
@@ -228,7 +228,7 @@ export default function Contact() {
                 <button
                   type="submit"
                   disabled={isSubmitting || isSubmitted}
-                  className={`w-full py-4 px-6 rounded-lg font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2 ${
+                  className={`w-full py-3 sm:py-4 px-6 rounded-lg font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base ${
                     isSubmitted
                       ? 'bg-green-600 hover:bg-green-700'
                       : isSubmitting
@@ -259,7 +259,7 @@ export default function Contact() {
               </form>
             </div>
 
-            <div className="bg-gray-50 px-8 py-6 border-t border-gray-100">
+            <div className="bg-gray-50 px-6 sm:px-8 py-6 border-t border-gray-100">
               <p className="text-sm text-gray-500 text-center">
                 We'll get back to you within 24 hours. Your information is secure with us.
               </p>

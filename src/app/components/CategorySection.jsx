@@ -32,16 +32,18 @@ const CategoryItem = ({ category }) => {
     const checkPosition = () => {
       if (itemRef.current) {
         const rect = itemRef.current.getBoundingClientRect();
-        setPopupPosition(rect.top < 150 ? 'bottom' : 'top');
+        setPopupPosition(rect.top < window.innerHeight / 2 ? 'bottom' : 'top');
       }
     };
 
     // Delay the check slightly to ensure proper rendering
     const timer = setTimeout(checkPosition, 50);
     window.addEventListener('scroll', checkPosition);
+    window.addEventListener('resize', checkPosition);
     return () => {
       clearTimeout(timer);
       window.removeEventListener('scroll', checkPosition);
+      window.removeEventListener('resize', checkPosition);
     };
   }, []);
 
@@ -59,7 +61,7 @@ const CategoryItem = ({ category }) => {
   };
 
   return (
-    <div className="relative" ref={itemRef}>
+    <div className="relative flex-shrink-0" ref={itemRef}>
       <div
         className="flex flex-col items-center justify-start space-y-2 cursor-pointer group"
         onMouseEnter={() => setIsHovered(true)}
@@ -67,7 +69,7 @@ const CategoryItem = ({ category }) => {
         onClick={handleCategoryClick}
         aria-label={category.name}
       >
-        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center
+        <div className="w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 rounded-full bg-gray-100 flex items-center justify-center
                        group-hover:bg-gray-200 transition-all duration-200 border border-gray-200
                        overflow-hidden transform group-hover:scale-105">
           {!hasError ? (
@@ -83,11 +85,11 @@ const CategoryItem = ({ category }) => {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <span className="text-xs text-center text-black">{category.name}</span>
+              <span className="text-xs text-center text-black line-clamp-2">{category.name}</span>
             </div>
           )}
         </div>
-        <span className="text-xs font-medium text-black text-center max-w-[80px]">
+        <span className="text-xs sm:text-sm font-medium text-black text-center max-w-[80px] sm:max-w-[100px] md:max-w-[120px] line-clamp-2">
           {category.name.split(' ').map((word, i) => (
             <span key={`${category.name}-${word}-${i}`} className="block">{word}</span>
           ))}
@@ -95,12 +97,12 @@ const CategoryItem = ({ category }) => {
       </div>
 
       <div className={`absolute z-10 ${popupPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} 
-                      left-1/2 transform -translate-x-1/2 w-40 transition-opacity duration-150 
+                      left-1/2 transform -translate-x-1/2 w-32 sm:w-36 md:w-40 transition-opacity duration-150 
                       ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-200">
-          <p className="text-sm font-medium text-center text-black">{category.name}</p>
+        <div className="bg-white p-2 sm:p-3 rounded-lg shadow-xl border border-gray-200">
+          <p className="text-xs sm:text-sm font-medium text-center text-black line-clamp-1">{category.name}</p>
           {category.description && (
-            <p className="text-xs text-gray-600 text-center mt-1">{category.description}</p>
+            <p className="text-xs text-gray-600 text-center mt-1 line-clamp-2">{category.description}</p>
           )}
           <div className={`absolute w-3 h-3 bg-white ${popupPosition === 'top' ? '-bottom-1' : '-top-1'} 
                           left-1/2 transform -translate-x-1/2 rotate-45 border-r border-b border-gray-200`}></div>
@@ -148,13 +150,13 @@ const CategorySection = () => {
   // Loading state
   if (!isMounted || loading) {
     return (
-      <div id='products' className="container mx-auto px-4 py-6 md:px-20">
-        <h1 className="text-xl font-bold mb-6 text-center text-black">Explore Categories</h1>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
+      <div id='products' className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-6 text-center text-black">Explore Categories</h1>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 sm:gap-6 md:gap-8">
           {[...Array(14)].map((_, index) => (
             <div key={index} className="flex flex-col items-center">
-              <div className="w-24 h-24 rounded-full bg-gray-200 animate-pulse"></div>
-              <div className="w-16 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              <div className="w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="w-16 sm:w-20 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
             </div>
           ))}
         </div>
@@ -165,13 +167,13 @@ const CategorySection = () => {
   // Error state
   if (error) {
     return (
-      <div id='products' className="container mx-auto px-4 py-6 md:px-20">
-        <h1 className="text-xl font-bold mb-6 text-center text-black">Explore Categories</h1>
+      <div id='products' className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-6 text-center text-black">Explore Categories</h1>
         <div className="text-center py-8">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-red-600 mb-4 text-sm sm:text-base">{error}</p>
           <button 
             onClick={fetchCategories}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
           >
             Try Again
           </button>
@@ -181,14 +183,14 @@ const CategorySection = () => {
   }
 
   return (
-    <div id='products' className="container mx-auto px-4 py-6 md:px-20">
-      <h1 className="text-xl font-bold mb-6 text-center text-black">Explore Categories</h1>
+    <div id='products' className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-6 text-center text-black">Explore Categories</h1>
       {categories.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-600">No categories available at the moment.</p>
+          <p className="text-gray-600 text-sm sm:text-base">No categories available at the moment.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 sm:gap-6 md:gap-8">
           {categories.map((category) => (
             <CategoryItem
               key={category._id}

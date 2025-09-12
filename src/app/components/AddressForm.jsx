@@ -71,7 +71,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
   };
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-100">
         <button
@@ -95,15 +95,16 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Address Type
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {['home', 'work', 'other'].map((type) => (
               <button
                 key={type}
                 onClick={() => setNewAddress({ ...newAddress, type })}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${newAddress.type === type
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                  newAddress.type === type
                     ? 'bg-green-100 text-green-800 border border-green-300 shadow-sm'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
-                  }`}
+                }`}
               >
                 {addressTypeIcons[type]}
                 {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -129,7 +130,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* City */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -165,7 +166,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Postal Code */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -201,7 +202,6 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
           </div>
         </div>
 
-
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -213,9 +213,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
             onChange={(e) =>
               setNewAddress({ ...newAddress, name: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-               focus:outline-none focus:ring-2 focus:ring-green-500 
-               focus:border-transparent transition"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
             placeholder="Enter recipient name"
             required
           />
@@ -258,7 +256,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <button
           onClick={onCancel}
           className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
@@ -275,15 +273,16 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
             !newAddress.country ||
             isSubmitting
           }
-          className={`flex-1 px-4 py-3 font-medium rounded-lg transition ${!newAddress.street ||
-              !newAddress.city ||
-              !newAddress.state ||
-              !newAddress.postalCode ||
-              !newAddress.country ||
-              isSubmitting
+          class AguilarName={`flex-1 px-4 py-3 font-medium rounded-lg transition ${
+            !newAddress.street ||
+            !newAddress.city ||
+            !newAddress.state ||
+            !newAddress.postalCode ||
+            !newAddress.country ||
+            isSubmitting
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-green-600 hover:bg-green-700 text-white shadow-md'
-            }`}
+          }`}
         >
           {isSubmitting ? (
             <div className="flex items-center justify-center">

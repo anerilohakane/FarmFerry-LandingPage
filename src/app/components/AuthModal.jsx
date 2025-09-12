@@ -75,7 +75,6 @@ const AuthModal = ({ open, onClose }) => {
     }
   };
 
-
   const handleSendLoginOtp = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -146,14 +145,14 @@ const AuthModal = ({ open, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 mt-20"
+        className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 sm:p-6"
         onClick={handleClose}
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="relative bg-white rounded-2xl w-full max-w-sm mx-auto shadow-2xl"
+          className="relative bg-white rounded-2xl w-full max-w-md sm:max-w-lg mx-auto shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
@@ -166,7 +165,7 @@ const AuthModal = ({ open, onClose }) => {
           </button>
 
           {/* Content container */}
-          <div className="text-center p-6">
+          <div className="text-center p-6 sm:p-8">
             {/* Logo */}
             <div className="flex justify-center mb-4">
               <Image
@@ -211,7 +210,7 @@ const AuthModal = ({ open, onClose }) => {
                 className="space-y-4"
               >
                 <div>
-                  <h1 className="text-xl font-bold mb-1">Welcome to FarmFerry</h1>
+                  <h1 className="text-lg sm:text-xl font-bold mb-1">Welcome to FarmFerry</h1>
                   <p className="text-sm text-gray-600">Enter your phone number to login</p>
                 </div>
                 
@@ -269,7 +268,7 @@ const AuthModal = ({ open, onClose }) => {
                   >
                     <ArrowLeft size={18} />
                   </button>
-                  <h1 className="text-xl font-bold flex-1 text-center">Enter OTP</h1>
+                  <h1 className="text-lg sm:text-xl font-bold flex-1 text-center">Enter OTP</h1>
                   <div className="w-10"></div>
                 </div>
                 
@@ -332,4 +331,4 @@ const AuthModal = ({ open, onClose }) => {
   );
 };
 
-export default AuthModal; 
+export default AuthModal;

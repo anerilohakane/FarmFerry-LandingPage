@@ -15,7 +15,6 @@ export default function NewLaunches() {
   const { cart, addToCart: contextAddToCart, loading: cartLoading } = useCart();
   
   const timeoutRef = useRef({});
-
   const scrollerRef = useRef(null);
   const animationRef = useRef(null);
   const scrollAmountRef = useRef(0);
@@ -211,16 +210,16 @@ export default function NewLaunches() {
   };
 
   return (
-    <section className="py-8 px-4 bg-green-100 select-none">
-      <div className="container mx-auto max-w-7xl">
+    <section className="py-6 sm:py-8 px-3 sm:px-4 bg-green-100 select-none">
+      <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">New Launches</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">New Launches</h2>
           <div className="w-16 h-1 bg-green-600 mx-auto mt-2"></div>
         </div>
 
         <div
           ref={scrollerRef}
-          className="flex overflow-x-hidden py-4 gap-4 no-scrollbar"
+          className="flex overflow-x-hidden py-4 gap-3 sm:gap-4 no-scrollbar"
           onMouseDown={handleUserScrollStart}
           onTouchStart={handleUserScrollStart}
           onMouseMove={handleUserScrollMove}
@@ -242,7 +241,7 @@ export default function NewLaunches() {
             Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={`loading-${index}`}
-                className="flex-shrink-0 w-48 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 animate-pulse"
+                className="flex-shrink-0 w-40 sm:w-48 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 animate-pulse"
               >
                 <div className="h-40 bg-gray-200"></div>
                 <div className="p-3">
@@ -254,10 +253,10 @@ export default function NewLaunches() {
             ))
           ) : error ? (
             <div className="w-full text-center py-8">
-              <p className="text-red-500 mb-4">{error}</p>
+              <p className="text-red-500 mb-4 text-sm sm:text-base">{error}</p>
               <button 
                 onClick={() => window.location.reload()} 
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                className="min-w-[140px] bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
               >
                 Retry
               </button>
@@ -265,14 +264,14 @@ export default function NewLaunches() {
           ) : products.length === 0 ? (
             <div className="w-full text-center py-8">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
-                <h3 className="text-lg font-semibold text-yellow-800 mb-2">No Special Offers Available</h3>
-                <p className="text-yellow-700 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-yellow-800 mb-2">No Special Offers Available</h3>
+                <p className="text-yellow-700 mb-4 text-sm sm:text-base">
                   We don't have any products with active offers at the moment. 
                   Check back soon for exciting deals!
                 </p>
                 <button 
                   onClick={() => window.location.reload()} 
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors"
+                  className="min-w-[140px] bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors"
                 >
                   Refresh Offers
                 </button>
@@ -288,10 +287,9 @@ export default function NewLaunches() {
               return (
                 <div
                   key={`${product._id}-${index}`}
-                  className="flex-shrink-0 w-48 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 relative"
+                  className="flex-shrink-0 w-40 sm:w-48 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 relative"
                   onDragStart={handleDragStart}
                 >
-                  {/* Offer Badge */}
                   {(product.offerPercentage > 0 || (product.discountedPrice && product.discountedPrice < (product.price || 0))) && (
                     <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
                       {product.offerPercentage > 0 
@@ -373,7 +371,7 @@ export default function NewLaunches() {
         <div className="mt-8 text-center">
           <button
             onClick={redirectToPlayStore}
-            className="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors shadow-md hover:shadow-lg"
+            className="min-w-[140px] inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors shadow-md hover:shadow-lg"
           >
             Available on App
             <ArrowRight size={16} className="ml-2" />
