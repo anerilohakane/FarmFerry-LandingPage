@@ -500,8 +500,8 @@ const Header = () => {
   }, [isAuthenticated, getToken, selectedPayment, createOrder, handleRazorpayPayment]);
 
   const CartItem = React.memo(({ item }) => {
-    //const itemPrice = item.discountedPrice || item.price || 0;
-    const itemPrice = (item.discountedPrice && item.discountedPrice > 0) ? item.discountedPrice : (item.price || 0);
+    const [imageSrc, setImageSrc] = useState(item.product?.images?.[0]?.url || '/images/explore/tomato.png');
+    const itemPrice = item.discountedPrice || item.price || 0;
     const itemQty = item.qty || item.quantity || 1;
     const totalPrice = (itemPrice * itemQty).toFixed(2);
     const originalPrice = item.price ? (item.price * itemQty).toFixed(2) : null;
@@ -538,7 +538,7 @@ const Header = () => {
             <div className="text-gray-500 text-xs sm:text-sm">{item.product.unit}</div>
             <div className="mt-1 flex items-center">
               <span className="font-bold text-green-700 text-sm sm:text-base">₹{totalPrice}</span>
-              {originalPrice && item.discountedPrice>0 && item.discountedPrice < item.price && (
+              {originalPrice && item.discountedPrice && item.discountedPrice < item.price && (
                 <span className="text-gray-400 text-xs sm:text-sm line-through ml-2">
                   ₹{originalPrice}
                 </span>
