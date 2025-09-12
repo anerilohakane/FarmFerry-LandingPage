@@ -80,8 +80,9 @@ export const CartProvider = ({ children }) => {
   // Helper function to transform API response to consistent cart format
   const transformCartItems = (items) => {
     return items.map(item => ({
-      _id: item._id || item.product?._id,
-      cartItemId: item._id,
+      _id: item.product?._id || item._id, // Product ID for display
+      cartItemId: item._id, // Cart item ID for backend operations
+      backendCartItemId: item._id, // Explicit backend cart item ID
       product: {
         _id: item.product?._id || item._id,
         name: item.product?.name || item.name,
@@ -330,7 +331,7 @@ export const CartProvider = ({ children }) => {
       setError(null);
       const token = getToken();
       const currentItem = cart.find(item =>
-        item._id === cartItemId || item.cartItemId === cartItemId
+        item._id === cartItemId || item.cartItemId === cartItemId || item.backendCartItemId === cartItemId
       );
 
       if (!currentItem) {
@@ -338,9 +339,11 @@ export const CartProvider = ({ children }) => {
       }
 
       const newQuantity = (currentItem.qty || currentItem.quantity || 0) + 1;
+      // Use the correct backend cart item ID
+      const backendItemId = currentItem.backendCartItemId || currentItem.cartItemId;
 
       if (isAuthenticated && token) {
-        const response = await fetch(`${API_BASE_URL}/cart/items/${cartItemId}`, {
+        const response = await fetch(`${API_BASE_URL}/cart/items/${backendItemId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -352,7 +355,8 @@ export const CartProvider = ({ children }) => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update quantity');
+          const errorText = await response.text();
+          throw new Error(`Failed to update quantity: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
@@ -360,7 +364,7 @@ export const CartProvider = ({ children }) => {
       } else {
         setCart(prevCart => {
           const newCart = prevCart.map(item =>
-            (item._id === cartItemId || item.cartItemId === cartItemId)
+            (item._id === cartItemId || item.cartItemId === cartItemId || item.backendCartItemId === cartItemId)
               ? {
                 ...item,
                 qty: newQuantity,
@@ -373,9 +377,10 @@ export const CartProvider = ({ children }) => {
         });
       }
     } catch (err) {
-      setError(err.message);
+      const errorMessage = err.message || 'Failed to increase quantity';
+      setError(errorMessage);
       console.error('Error increasing quantity:', err);
-      throw err;
+      // Don't re-throw to prevent UI crashes
     }
   };
 
@@ -384,7 +389,7 @@ export const CartProvider = ({ children }) => {
       setError(null);
       const token = getToken();
       const currentItem = cart.find(item =>
-        item._id === cartItemId || item.cartItemId === cartItemId
+        item._id === cartItemId || item.cartItemId === cartItemId || item.backendCartItemId === cartItemId
       );
 
       if (!currentItem) {
@@ -398,8 +403,11 @@ export const CartProvider = ({ children }) => {
         return;
       }
 
+      // Use the correct backend cart item ID
+      const backendItemId = currentItem.backendCartItemId || currentItem.cartItemId;
+
       if (isAuthenticated && token) {
-        const response = await fetch(`${API_BASE_URL}/cart/items/${cartItemId}`, {
+        const response = await fetch(`${API_BASE_URL}/cart/items/${backendItemId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -411,7 +419,8 @@ export const CartProvider = ({ children }) => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update quantity');
+          const errorText = await response.text();
+          throw new Error(`Failed to update quantity: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
@@ -419,7 +428,7 @@ export const CartProvider = ({ children }) => {
       } else {
         setCart(prevCart => {
           const newCart = prevCart.map(item =>
-            (item._id === cartItemId || item.cartItemId === cartItemId)
+            (item._id === cartItemId || item.cartItemId === cartItemId || item.backendCartItemId === cartItemId)
               ? {
                 ...item,
                 qty: newQuantity,
@@ -432,9 +441,10 @@ export const CartProvider = ({ children }) => {
         });
       }
     } catch (err) {
-      setError(err.message);
+      const errorMessage = err.message || 'Failed to decrease quantity';
+      setError(errorMessage);
       console.error('Error decreasing quantity:', err);
-      throw err;
+      // Don't re-throw to prevent UI crashes
     }
   };
 
@@ -443,33 +453,63 @@ export const CartProvider = ({ children }) => {
       setError(null);
       const token = getToken();
 
+      // Validate cartItemId
+      if (!cartItemId) {
+        throw new Error('Cart item ID is required');
+      }
+
+      // Find the item to get the correct backend ID
+      const currentItem = cart.find(item =>
+        item._id === cartItemId || item.cartItemId === cartItemId || item.backendCartItemId === cartItemId
+      );
+
       if (isAuthenticated && token) {
-        const response = await fetch(`${API_BASE_URL}/cart/items/${cartItemId}`, {
+        // Use the correct backend cart item ID
+        const backendItemId = currentItem?.backendCartItemId || currentItem?.cartItemId || cartItemId;
+        
+        const response = await fetch(`${API_BASE_URL}/cart/items/${backendItemId}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
 
         if (!response.ok) {
-          throw new Error('Failed to remove item from cart');
+          const errorText = await response.text();
+          console.error(`Failed to remove item from cart: ${response.status} - ${errorText}`);
+          
+          // If item not found on server, remove from local state anyway
+          if (response.status === 404) {
+            setCart(prevCart => {
+              const newCart = prevCart.filter(item =>
+                !(item._id === cartItemId || item.cartItemId === cartItemId || item.backendCartItemId === cartItemId)
+              );
+              return newCart;
+            });
+            return;
+          }
+          
+          throw new Error(`Failed to remove item from cart: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
         handleApiResponse(data);
       } else {
+        // For non-authenticated users, remove from local state
         setCart(prevCart => {
           const newCart = prevCart.filter(item =>
-            !(item._id === cartItemId || item.cartItemId === cartItemId)
+            !(item._id === cartItemId || item.cartItemId === cartItemId || item.backendCartItemId === cartItemId)
           );
           saveCartToLocalStorage(newCart);
           return newCart;
         });
       }
     } catch (err) {
-      setError(err.message);
+      const errorMessage = err.message || 'Failed to remove item from cart';
+      setError(errorMessage);
       console.error('Error removing from cart:', err);
-      throw err;
+      // Don't re-throw the error to prevent UI crashes
     }
   };
 
