@@ -18,7 +18,7 @@ const Banner = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 3000); // 30 seconds
+    }, 30000); // 30 seconds
 
     return () => clearInterval(interval); // Cleanup on unmount
   }, [images.length]);
@@ -68,10 +68,10 @@ const Banner = () => {
       </div>
 
       {/* Mobile - Half Banner Image + Text + Button */}
-      <div className="md:hidden bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="md:hidden bg-white rounded-xl shadow-sm overflow-hidden mt-6 sm:mt-8">
         <div className="flex flex-col">
           {/* Top Half: Banner Image Carousel */}
-          <div className="relative w-full aspect-[3/2] max-h-[280px] min-h-[120px] overflow-hidden">
+          <div className="relative w-full aspect-[3/2] max-h-[280px] min-h-[120px] overflow-hidden pt-4 sm:pt-6">
             {images.map((src, index) => (
               <Image
                 key={index}
