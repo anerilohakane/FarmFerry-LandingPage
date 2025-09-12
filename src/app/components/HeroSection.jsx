@@ -18,7 +18,7 @@ const Banner = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 30000); // 30 seconds
+    }, 3000); // 30 seconds
 
     return () => clearInterval(interval); // Cleanup on unmount
   }, [images.length]);
