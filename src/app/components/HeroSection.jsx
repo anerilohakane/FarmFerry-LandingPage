@@ -9,12 +9,12 @@ const Banner = () => {
     '/images/Hero Banner 2.png',
     '/images/Hero Banner 3.png',
     '/images/Hero Banner 4.png',
-    '/images/Hero Banner 5.png',
+    // '/images/Hero Banner 5.png',
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Auto-scroll every 30 seconds
+  // Auto-scroll every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
