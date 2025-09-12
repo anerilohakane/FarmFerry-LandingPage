@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft, MapPin, Home, Briefcase, MoreHorizontal } from 'lucide-react';
+import GoogleMapsPicker from './GoogleMapsPicker';
 
 const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,6 +65,21 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
     }
   };
 
+  const handleAddressSelect = (addressData) => {
+    if (addressData) {
+      setNewAddress({
+        ...newAddress,
+        street: addressData.street || addressData.formattedAddress,
+        city: addressData.city,
+        state: addressData.state,
+        postalCode: addressData.postalCode,
+        country: addressData.country,
+        latitude: addressData.lat,
+        longitude: addressData.lng
+      });
+    }
+  };
+
   const addressTypeIcons = {
     home: <Home size={16} />,
     work: <Briefcase size={16} />,
@@ -110,6 +126,21 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Google Maps Picker (Visible and Functional) */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Pick Address with Maps
+            </label>
+          </div>
+          
+          <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <GoogleMapsPicker
+              onLocationSelect={handleAddressSelect}
+            />
           </div>
         </div>
 
@@ -273,7 +304,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
             !newAddress.country ||
             isSubmitting
           }
-          class AguilarName={`flex-1 px-4 py-3 font-medium rounded-lg transition ${
+          className={`flex-1 px-4 py-3 font-medium rounded-lg transition ${
             !newAddress.street ||
             !newAddress.city ||
             !newAddress.state ||

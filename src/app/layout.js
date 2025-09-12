@@ -1,32 +1,33 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "./components/Header"
+import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { CartProvider } from "../context/CartContext";
 import { AuthProvider } from "../context/AuthContext";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: 'swap', // improves font loading performance
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  display: 'swap',
+  display: "swap",
 });
 
 export const metadata = {
   title: {
     default: "FarmFerry - Fresh Farm Products Delivered to Your Doorstep",
-    template: "%s | FarmFerry" // This will add FarmFerry suffix to child page titles
+    template: "%s | FarmFerry",
   },
   description: "Order fresh fruits, vegetables, dairy and farm products online. Farm-to-home delivery with best quality and prices across India.",
   keywords: ["fresh vegetables", "organic fruits", "farm delivery", "dairy products", "online grocery", "farm to home"],
-  metadataBase: new URL('https://www.farmferry.in'), // Required for OG tags
+  metadataBase: new URL("https://www.farmferry.in"),
   alternates: {
-    canonical: '/', // Helps prevent duplicate content issues
+    canonical: "/",
   },
   openGraph: {
     title: "FarmFerry - Fresh Farm Products Delivered",
@@ -35,23 +36,23 @@ export const metadata = {
     siteName: "FarmFerry",
     images: [
       {
-        url: '/og-image.jpg', // Recommended size: 1200x630
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: 'FarmFerry - Fresh Farm Products',
+        alt: "FarmFerry - Fresh Farm Products",
       },
     ],
-    locale: 'en_IN',
-    type: 'website',
+    locale: "en_IN",
+    type: "website",
   },
   twitter: {
-    card: 'summary_large_image',
+    card: "summary_large_image",
     title: "FarmFerry - Fresh Farm Products Delivered",
     description: "Order fresh farm products online with doorstep delivery across India.",
-    images: ['/twitter-image.jpg'], // Recommended size: 1200x628
+    images: ["/twitter-image.jpg"],
   },
   verification: {
-    google: '4MCdnp-K0Pb77w3z6a-TLdQ6X1qpeFC83IuBXj98RRE', // For Google Search Console
+    google: "4MCdnp-K0Pb77w3z6a-TLdQ6X1qpeFC83IuBXj98RRE",
   },
   robots: {
     index: true,
@@ -61,9 +62,9 @@ export const metadata = {
       index: true,
       follow: true,
       noimageindex: false,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
 };
@@ -71,12 +72,18 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geometry&region=IN&language=en`}
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <CartProvider>
-            <Header/>
+            <Header />
             {children}
-            <Footer/>
+            <Footer />
           </CartProvider>
         </AuthProvider>
       </body>

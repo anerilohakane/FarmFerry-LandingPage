@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  ShoppingCart, X, Minus, Plus, Trash, Info, Clock, Package,
+  ShoppingCart, X, Minus, Plus, Info, Clock, Package,
   CheckCircle, Shield, PhoneCall, ArrowRight, LogIn, Truck,
-  Mail, User, Lock, Smartphone, ArrowLeft, CreditCard, Wallet,
-  Banknote, UserCircle, MapPin, Gift, HelpCircle, ChevronRight,
+  UserCircle, MapPin, HelpCircle, ArrowLeft, CreditCard,
   Home, Box, Users, Phone, Download, LogOut, PartyPopper
 } from 'lucide-react';
 import Image from 'next/image';
@@ -81,7 +80,6 @@ const Header = () => {
     removeFromCart,
     getCartItemCount,
     getCartTotal,
-    getCartGST,
     getDeliveryCharges,
     getGrandTotal,
     clearCart
@@ -176,12 +174,6 @@ const Header = () => {
     }
   }, [isAuthenticated, setCartOpen]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUserAddresses();
-    }
-  }, [isAuthenticated, API_KEY, getToken]);
-
   const fetchUserAddresses = useCallback(async () => {
     try {
       const token = getToken();
@@ -192,12 +184,22 @@ const Header = () => {
       });
       if (response.ok) {
         const addresses = await response.json();
-        cacheAddresses(addresses);
+        try {
+          localStorage.setItem('user-addresses', JSON.stringify(addresses));
+        } catch (error) {
+          console.error('Error caching addresses:', error);
+        }
       }
     } catch (error) {
       console.error('Error fetching addresses:', error);
     }
   }, [API_KEY, getToken]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUserAddresses();
+    }
+  }, [isAuthenticated, fetchUserAddresses]);
 
   const handleAddressSelect = useCallback((address) => {
     setSelectedAddress(address);
@@ -282,7 +284,7 @@ const Header = () => {
       throw new Error('User information is missing');
     }
 
-    if (cart.length === 0) {
+    if (!cart || cart.length === 0) {
       throw new Error('Cart is empty');
     }
 
@@ -312,21 +314,21 @@ const Header = () => {
 
     return {
       customer: user._id,
-      supplier: cart[0].supplier?._id || null,
+      supplier: cart[0]?.supplier?._id || null,
       items: cart.map(item => ({
-        product: item.product || item._id,
+        product: item.product?._id || item._id,
         quantity: item.qty || item.quantity || 1,
-        price: item.price,
-        discountedPrice: item.discountedPrice || item.price,
+        price: item.price || 0,
+        discountedPrice: item.discountedPrice || item.price || 0,
         variation: item.variation || {},
-        totalPrice: (item.discountedPrice || item.price) * (item.qty || item.quantity || 1)
+        totalPrice: (item.discountedPrice || item.price || 0) * (item.qty || item.quantity || 1)
       })),
       subtotal: itemsTotal,
       discountAmount: 0,
-      gst: charges.gst,
-      platformFee: charges.platformFee,
+      gst: charges.gst || 0,
+      platformFee: charges.platformFee || 0,
       handlingFee: 0,
-      deliveryCharge: charges.isFreeDelivery ? 0 : charges.deliveryCharge,
+      deliveryCharge: charges.isFreeDelivery ? 0 : charges.deliveryCharge || 0,
       totalAmount: grandTotal,
       paymentMethod: backendPaymentMethod,
       paymentStatus: 'pending',
@@ -350,14 +352,6 @@ const Header = () => {
 
       if (result.success) {
         setShowOrderConfirmation(true);
-        setTimeout(() => {
-          clearCart();
-          setCartOpen(false);
-          setCheckoutStep('cart');
-          setSelectedAddress(null);
-          setSelectedPayment('');
-          setShowOrderConfirmation(false);
-        }, 3000);
       }
     } catch (error) {
       console.error('Error placing order:', error);
@@ -365,58 +359,14 @@ const Header = () => {
     } finally {
       setIsPlacingOrder(false);
     }
-  }, [prepareOrderData, createOrder, clearCart, setCartOpen]);
-
-  const cacheAddresses = (addresses) => {
-    try {
-      localStorage.setItem('user-addresses', JSON.stringify(addresses));
-    } catch (error) {
-      console.error('Error caching addresses:', error);
-    }
-  };
-
-  const handleOpenPayment = useCallback(async (orderData) => {
-    try {
-      const token = getToken();
-      if (!isAuthenticated || !token) {
-        alert('Please login to complete payment');
-        setIsClosing(true);
-        setCartOpen(false);
-        setTimeout(() => {
-          setShowAuthModal(true);
-          setIsClosing(false);
-        }, 300);
-        return;
-      }
-
-      if (selectedPayment === 'online') {
-        setIsLoadingPayment(true);
-        try {
-          await handleRazorpayPayment(orderData);
-        } finally {
-          setIsLoadingPayment(false);
-        }
-      } else {
-        const orderResponse = await createOrder(orderData);
-        if (orderResponse.success) {
-          setShowOrderConfirmation(true);
-          setCartOpen(false);
-          setCheckoutStep('cart');
-          setSelectedAddress(null);
-          setSelectedPayment('');
-        } else {
-          throw new Error(orderResponse.message || 'Failed to create order');
-        }
-      }
-    } catch (error) {
-      console.error('Error opening payment:', error);
-      alert('Failed to initiate payment. Please try again.');
-      setIsLoadingPayment(false);
-    }
-  }, [isAuthenticated, getToken, selectedPayment, createOrder]);
+  }, [prepareOrderData, createOrder]);
 
   const loadRazorpayScript = () => {
     return new Promise((resolve, reject) => {
+      if (window.Razorpay) {
+        resolve();
+        return;
+      }
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
@@ -453,7 +403,7 @@ const Header = () => {
       const orderRef = createdOrder.orderId || createdOrder._id || `FF_${Date.now()}`;
 
       const options = {
-        key: 'rzp_test_Sbs1ZuKmKT2RXE',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY || 'rzp_test_Sbs1ZuKmKT2RXE',
         amount: Math.round((createdOrder.totalAmount || orderData.totalAmount) * 100),
         currency: 'INR',
         name: 'Farm Ferry',
@@ -509,12 +459,52 @@ const Header = () => {
     }
   }, [user, clearCart, createOrder]);
 
+  const handleOpenPayment = useCallback(async (orderData) => {
+    try {
+      const token = getToken();
+      if (!isAuthenticated || !token) {
+        alert('Please login to complete payment');
+        setIsClosing(true);
+        setCartOpen(false);
+        setTimeout(() => {
+          setShowAuthModal(true);
+          setIsClosing(false);
+        }, 300);
+        return;
+      }
+
+      if (selectedPayment === 'online') {
+        setIsLoadingPayment(true);
+        try {
+          await handleRazorpayPayment(orderData);
+        } finally {
+          setIsLoadingPayment(false);
+        }
+      } else {
+        const orderResponse = await createOrder(orderData);
+        if (orderResponse.success) {
+          setShowOrderConfirmation(true);
+          setCartOpen(false);
+          setCheckoutStep('cart');
+          setSelectedAddress(null);
+          setSelectedPayment('');
+        } else {
+          throw new Error(orderResponse.message || 'Failed to create order');
+        }
+      }
+    } catch (error) {
+      console.error('Error opening payment:', error);
+      alert('Failed to initiate payment. Please try again.');
+      setIsLoadingPayment(false);
+    }
+  }, [isAuthenticated, getToken, selectedPayment, createOrder, handleRazorpayPayment]);
+
   const CartItem = React.memo(({ item }) => {
+    const [imageSrc, setImageSrc] = useState(item.product?.images?.[0]?.url || '/images/explore/tomato.png');
     const itemPrice = item.discountedPrice || item.price || 0;
     const itemQty = item.qty || item.quantity || 1;
     const totalPrice = (itemPrice * itemQty).toFixed(2);
     const originalPrice = item.price ? (item.price * itemQty).toFixed(2) : null;
-    const imageUrl = item.product?.images?.[0]?.url || '/images/explore/tomato.png';
 
     return (
       <motion.div
@@ -526,13 +516,15 @@ const Header = () => {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
             <Image
-              src={imageUrl}
+              src={imageSrc}
               width={80}
               height={80}
               alt={item.product.name}
               className="rounded-lg object-cover border border-gray-100"
-              onError={(e) => {
-                e.target.src = '/images/explore/tomato.png';
+              onLoadingComplete={(img) => {
+                if (img.naturalWidth === 0) {
+                  setImageSrc('/images/explore/tomato.png');
+                }
               }}
             />
             {item.discountedPrice && item.discountedPrice < item.price && (
@@ -558,10 +550,14 @@ const Header = () => {
           <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
             <button
               onClick={() => {
-                if (itemQty === 1) {
-                  removeFromCart(item._id || item.cartItemId);
-                } else {
-                  decreaseQty(item._id || item.cartItemId);
+                try {
+                  if (itemQty === 1) {
+                    removeFromCart(item._id || item.cartItemId);
+                  } else {
+                    decreaseQty(item._id || item.cartItemId);
+                  }
+                } catch (err) {
+                  console.error('Error updating cart:', err);
                 }
               }}
               className="bg-gray-50 w-8 sm:w-10 h-8 sm:h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition"
@@ -607,7 +603,6 @@ const Header = () => {
           <X size={18} />
         </button>
       </div>
-
       {cart.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -635,11 +630,11 @@ const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-gradient-to-r from-green-50 to-blue-50 px-4 sm:px-6 py-4 flex items-start gap-4 mx-4 sm:mx-6 my-4 rounded-xl border border-green-100"
           >
-            <div className="bg-white p-2 rounded-full shadow-sm border border-green-200 mt-1">
+            <div className="flex justify-center bg-white p-2 rounded-full shadow-sm border border-green-200 mt-1">
               <Clock size={18} className="text-green-600" />
             </div>
             <div>
-              <div className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
+              <div className="flex justify-center items-center gap-2">
                 Delivery in {charges.deliveryTime}
                 {charges.isFreeDelivery && (
                   <span className="bg-green-100 text-green-800 text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full flex items-center">
@@ -947,104 +942,119 @@ const Header = () => {
     </>
   );
 
-  const OrderConfirmation = () => (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center"
-    >
+  const OrderConfirmation = () => {
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        clearCart();
+        setCartOpen(false);
+        setCheckoutStep('cart');
+        setSelectedAddress(null);
+        setSelectedPayment('');
+        setShowOrderConfirmation(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }, [clearCart, setCartOpen]);
+
+    return (
       <motion.div
-        initial={{ scale: 0.8, rotateY: 90 }}
-        animate={{ scale: 1, rotateY: 0 }}
-        transition={{ 
-          type: "spring", 
-          damping: 15, 
-          stiffness: 200,
-          duration: 0.8
-        }}
-        className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 text-center relative overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center"
       >
-        <div className="absolute -top-10 -right-10 w-20 sm:w-24 h-20 sm:h-24 bg-green-100 rounded-full opacity-50"></div>
-        <div className="absolute -bottom-8 -left-8 w-16 sm:w-20 h-16 sm:h-20 bg-green-200 rounded-full opacity-30"></div>
-        
         <motion.div
-          initial={{ scale: 0, y: 100 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className="mb-4 sm:mb-6"
-        >
-          <PartyPopper size={48} className="mx-auto text-green-500" />
-        </motion.div>
-        
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-          className="flex justify-center mb-4 sm:mb-6"
-        >
-          <div className="relative">
-            <div className="w-16 sm:w-20 h-16 sm:h-20 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle size={32} className="text-green-600" />
-            </div>
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-              className="absolute inset-0 rounded-full border-4 border-green-400"
-            />
-          </div>
-        </motion.div>
-        
-        <motion.h2 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2"
-        >
-          Order Placed!
-        </motion.h2>
-        
-        <motion.p 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6"
-        >
-          Your order has been successfully placed.
-        </motion.p>
-        
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
-        >
-          <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
-            <p className="text-xs sm:text-sm text-green-800 font-medium">
-              Order #{(Math.random() * 10000).toFixed(0).padStart(4, '0')}
-            </p>
-            <p className="text-xs text-green-600 mt-1">
-              Estimated delivery: {charges.deliveryDate}
-            </p>
-          </div>
-        </motion.div>
-        
-        <motion.button
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          onClick={() => {
-            setShowOrderConfirmation(false);
-            clearCart();
-            setCartOpen(false);
+          initial={{ scale: 0.8, rotateY: 90 }}
+          animate={{ scale: 1, rotateY: 0 }}
+          transition={{ 
+            type: "spring", 
+            damping: 15, 
+            stiffness: 200,
+            duration: 0.8
           }}
-          className="mt-4 sm:mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
+          className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 text-center relative overflow-hidden"
         >
-          Continue Shopping
-        </motion.button>
+          <div className="absolute -top-10 -right-10 bg-green-100 rounded-full opacity-50 w-20 sm:w-24 h-20 sm:h-24"></div>
+          <div className="absolute -bottom-8 -left-8 bg-green-200 rounded-full opacity-30 w-16 sm:w-20 h-16 sm:h-20"></div>
+          
+          <motion.div
+            initial={{ scale: 0, y: 100 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="mb-4 sm:mb-6"
+          >
+            <PartyPopper size={48} className="mx-auto text-green-500" />
+          </motion.div>
+          
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+            className="flex justify-center mb-4 sm:mb-6"
+          >
+            <div className="relative">
+              <div className="w-16 sm:w-20 h-16 sm:h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle size={32} className="text-green-600" />
+              </div>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+                className="absolute inset-0 rounded-full border-4 border-green-400"
+              />
+            </div>
+          </motion.div>
+          
+          <motion.h2 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2"
+          >
+            Order Placed!
+          </motion.h2>
+          
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6"
+          >
+            Your order has been successfully placed.
+          </motion.p>
+          
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
+          >
+            <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
+              <p className="text-xs sm:text-sm text-green-800 font-medium">
+                Order #{(Math.random() * 10000).toFixed(0).padStart(4, '0')}
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                Estimated delivery: {charges.deliveryDate}
+              </p>
+            </div>
+          </motion.div>
+          
+          <motion.button
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.4 }}
+            onClick={() => {
+              setShowOrderConfirmation(false);
+              clearCart();
+              setCartOpen(false);
+            }}
+            className="mt-4 sm:mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
+          >
+            Continue Shopping
+          </motion.button>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
+    );
+  };
 
   return (
     <>
@@ -1056,11 +1066,12 @@ const Header = () => {
             <div className="flex justify-between h-14 sm:h-16 md:h-20 items-center">
               <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-6">
                 <div className="flex-shrink-0">
-                  <img
-                    className="h-8 sm:h-10 md:h-12 w-auto"
+                  <Image
                     src="/images/farmferry-logo.png"
+                    width={80}
+                    height={48}
                     alt="Farm Ferry"
-                    draggable={false}
+                    className="h-8 sm:h-10 md:h-12 w-auto"
                   />
                 </div>
 
@@ -1094,20 +1105,16 @@ const Header = () => {
                   {isAuthenticated ? 'Logout' : 'Login'}
                 </button>
 
-                {isAuthenticated && (
-                  <div className="relative">
-                    <button
-                      onClick={() => {
-                        setProfileOpen(true);
-                        setCartOpen(false);
-                      }}
-                      className="p-1 sm:p-1.5 md:p-2 rounded-full border border-gray-200 bg-green-50 text-green-700 shadow-sm hover:bg-green-600 hover:text-white hover:border-green-600 transition-colors"
-                      aria-label="Open profile"
-                    >
-                      <UserCircle size={18} />
-                    </button>
-                  </div>
-                )}
+                <button
+                  onClick={() => {
+                    setProfileOpen(true);
+                    setCartOpen(false);
+                  }}
+                  className="p-1 sm:p-1.5 md:p-2 rounded-full border border-gray-200 bg-green-50 text-green-700 shadow-sm hover:bg-green-600 hover:text-white hover:border-green-600 transition-colors"
+                  aria-label="Open profile"
+                >
+                  <UserCircle size={18} />
+                </button>
 
                 <div className="relative">
                   <button
