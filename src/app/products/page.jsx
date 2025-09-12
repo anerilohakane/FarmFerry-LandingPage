@@ -111,7 +111,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden relative group"
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden relative group w-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -134,7 +134,7 @@ const ProductCard = ({ product }) => {
       )}
 
       {/* Product Image */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-48 sm:h-40 xs:h-36 w-full overflow-hidden">
         <Image
           src={getImageUrl()}
           alt={product.name}
@@ -475,9 +475,9 @@ const ProductsPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="mb-6 flex items-center justify-between">
+      <div className="min-h-screen bg-gray-50 pt-16 sm:pt-20">
+        <div className="max-w-full sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => window.history.back()}
@@ -490,8 +490,8 @@ const ProductsPage = () => {
               <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
             </div>
           </div>
-          <div className="flex gap-6">
-            <div className="w-64 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="w-full lg:w-64 flex-shrink-0">
               <div className="bg-white rounded-lg shadow-sm p-4">
                 <div className="h-6 w-32 bg-gray-200 rounded mb-4 animate-pulse"></div>
                 <div className="space-y-3">
@@ -505,7 +505,7 @@ const ProductsPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {[...Array(10)].map((_, index) => (
                   <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden animate-pulse">
-                    <div className="h-48 bg-gray-200"></div>
+                    <div className="h-48 sm:h-40 xs:h-36"></div>
                     <div className="p-4 space-y-3">
                       <div className="h-4 bg-gray-200 rounded"></div>
                       <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -524,9 +524,9 @@ const ProductsPage = () => {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="mb-6 flex items-center justify-between">
+      <div className="min-h-screen bg-gray-50 pt-16 sm:pt-20">
+        <div className="max-w-full sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => window.history.back()}
@@ -536,7 +536,7 @@ const ProductsPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Buy {selectedCategory}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Buy {selectedCategory}</h1>
             </div>
           </div>
           <div className="text-center py-12">
@@ -554,10 +554,10 @@ const ProductsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50 pt-16 sm:pt-20">
+      <div className="max-w-full sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-4">
             <button 
               onClick={() => window.history.back()}
@@ -568,7 +568,7 @@ const ProductsPage = () => {
               </svg>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Buy {selectedCategory}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Buy {selectedCategory}</h1>
               {selectedSubcategory && selectedSubcategory !== selectedCategoryId ? (
                 <p className="text-sm text-gray-600 mt-1">
                   Showing products from: {subcategories.find(sub => sub._id === selectedSubcategory)?.name || 'Selected Category'}
@@ -582,15 +582,15 @@ const ProductsPage = () => {
           </div>
           
           {/* Search and Filter Controls */}
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
             {/* Search Bar */}
-            <div className="relative">
+            <div className="relative w-full sm:w-64">
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-full"
               />
               <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -601,7 +601,7 @@ const ProductsPage = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-full sm:w-auto"
             >
               <option value="name">Sort by Name</option>
               <option value="price-low">Price: Low to High</option>
@@ -611,7 +611,7 @@ const ProductsPage = () => {
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -637,7 +637,7 @@ const ProductsPage = () => {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
                 <div className="flex items-center space-x-4">
@@ -669,9 +669,9 @@ const ProductsPage = () => {
           </div>
         )}
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar - Subcategories */}
-          <div className="w-64 flex-shrink-0">
+          <div className="w-full lg:w-64 flex-shrink-0">
             <div className="bg-white rounded-lg shadow-sm p-4">
               <h2 className="font-semibold text-gray-900 mb-4">{selectedCategory} Categories</h2>
               <div className="space-y-1 max-h-96 overflow-y-auto">
