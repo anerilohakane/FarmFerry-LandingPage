@@ -296,7 +296,7 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
             />
           </div> */}
 
-          <button
+          {/* <button
             onClick={getCurrentLocation}
             disabled={isGettingLocation}
             className="px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center gap-2"
@@ -307,7 +307,7 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
             ) : (
               <Crosshair size={18} />
             )}
-          </button>
+          </button> */}
         </div>
 
         <p className="text-sm text-gray-600">
