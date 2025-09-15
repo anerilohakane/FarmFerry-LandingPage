@@ -9,7 +9,7 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
   const markerRef = useRef(null);
   const autocompleteRef = useRef(null);
   const searchInputRef = useRef(null);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
@@ -41,16 +41,16 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
   const initializeMap = async () => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-      
+
       if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
         throw new Error('Google Maps API key not configured. Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env file.');
       }
 
       const google = await waitForGoogleMaps();
-      
+
       // Default location (India center)
       const defaultCenter = initialLocation || { lat: 20.5937, lng: 78.9629 };
-      
+
       // Initialize map
       const map = new google.maps.Map(mapRef.current, {
         center: defaultCenter,
@@ -121,7 +121,7 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng()
           };
-          
+
           map.setCenter(location);
           map.setZoom(15);
           marker.setPosition(location);
@@ -140,10 +140,10 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
   // Handle location selection
   const handleLocationSelect = async (location, place = null) => {
     setSelectedLocation(location);
-    
+
     try {
       let addressDetails = {};
-      
+
       if (place) {
         // Use place details if available
         addressDetails = extractAddressFromPlace(place);
@@ -151,7 +151,7 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
         // Reverse geocode to get address
         const google = window.google;
         const geocoder = new google.maps.Geocoder();
-        
+
         const response = await new Promise((resolve, reject) => {
           geocoder.geocode({ location }, (results, status) => {
             if (status === 'OK' && results[0]) {
@@ -161,15 +161,15 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
             }
           });
         });
-        
+
         addressDetails = extractAddressFromPlace(response);
       }
-      
+
       const locationData = {
         ...location,
         ...addressDetails
       };
-      
+
       onLocationSelect && onLocationSelect(locationData);
     } catch (err) {
       console.error('Error getting address details:', err);
@@ -191,7 +191,7 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
 
     components.forEach(component => {
       const types = component.types;
-      
+
       if (types.includes('street_number')) {
         addressDetails.street = component.long_name + ' ' + addressDetails.street;
       } else if (types.includes('route')) {
@@ -223,21 +223,21 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
     }
 
     setIsGettingLocation(true);
-    
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const location = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
-        
+
         if (mapInstanceRef.current && markerRef.current) {
           mapInstanceRef.current.setCenter(location);
           mapInstanceRef.current.setZoom(15);
           markerRef.current.setPosition(location);
           handleLocationSelect(location);
         }
-        
+
         setIsGettingLocation(false);
       },
       (error) => {
@@ -282,9 +282,9 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
           <MapPin size={20} className="text-green-600" />
           <h3 className="font-semibold text-gray-800">Select Location on Map</h3>
         </div>
-        
+
         <div className="flex gap-2">
-          <div className="flex-1 relative">
+          {/* <div className="flex-1 relative">
             <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               ref={searchInputRef}
@@ -294,8 +294,8 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
               onChange={(e) => setSearchValue(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
-          </div>
-          
+          </div> */}
+
           <button
             onClick={getCurrentLocation}
             disabled={isGettingLocation}
@@ -309,7 +309,7 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
             )}
           </button>
         </div>
-        
+
         <p className="text-sm text-gray-600">
           Search for an address, click on the map, or drag the marker to select your location.
         </p>
@@ -325,13 +325,31 @@ const GoogleMapsPicker = ({ onLocationSelect, initialLocation = null, className 
             </div>
           </div>
         )}
-        
+
         <div
           ref={mapRef}
           className="w-full h-80 rounded-lg border border-gray-300"
           style={{ minHeight: '320px' }}
         />
+
+        {/* Floating current location button */}
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={getCurrentLocation}
+            disabled={isGettingLocation}
+            className="p-3 rounded-full bg-white text-green-600 hover:bg-green-50 disabled:bg-gray-200 shadow-md border border-gray-300 transition-colors flex items-center justify-center"
+            title="Use current location"
+          >
+            {isGettingLocation ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+            ) : (
+              <Crosshair size={20} />
+            )}
+          </button>
+        </div>
       </div>
+
+
 
       {/* Selected Location Info */}
       {selectedLocation && (
