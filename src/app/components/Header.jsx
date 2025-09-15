@@ -910,7 +910,7 @@ const Header = () => {
         <div className="mb-4 sm:mb-6">
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Welcome, {user?.name || 'User'}</h3>
           <p className="text-gray-600 text-xs sm:text-sm">{user?.phone || '9322506730'}</p>
-          <p className="text-gray-600 text-xs sm:text-sm">{user?.email || 'user@example.com'}</p>
+          {/* <p className="text-gray-600 text-xs sm:text-sm">{user?.email || 'user@example.com'}</p> */}
         </div>
 
         <div className="space-y-3 sm:space-y-4">
