@@ -210,9 +210,9 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
       ) : (
         <div className="space-y-6">
           {/* Integrated GoogleMapsPicker for functional map */}
-          <GoogleMapsPicker
+          {/* <GoogleMapsPicker
             onLocationSelect={(locationData) => console.log('Selected Location:', locationData)} // Handle selection as needed
-          />
+          /> */}
           
           <div className="grid gap-4">
             {addresses.map((address) => (
