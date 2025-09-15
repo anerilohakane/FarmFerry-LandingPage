@@ -54,7 +54,7 @@ The address list now includes:
 ### Environment Variables
 Add to your `.env` file:
 ```
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_actual_google_maps_api_key_here
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyDdyWVHNLd8n-8VvKzT5i3JxY2BjGqRnCs
 ```
 
 ### Google Maps API Requirements
