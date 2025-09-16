@@ -191,6 +191,16 @@ class ApiService {
     return this.request(`/products/${id}`);
   }
 
+  // Search Products API
+  async searchProducts(query, params = {}) {
+    const searchParams = new URLSearchParams({
+      search: query,
+      limit: 10,
+      ...params
+    }).toString();
+    return this.request(`/products?${searchParams}`);
+  }
+
   // Get products with active offers
   async getProductsWithOffers(params = {}) {
     const defaultParams = {

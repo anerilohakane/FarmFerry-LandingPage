@@ -12,6 +12,7 @@ import {
 import Image from 'next/image';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { apiService } from '../../utils/api';
 import AuthModal from './AuthModal';
 import AddressList from './AddressList';
 
@@ -96,6 +97,10 @@ const Header = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState(null);
 
   const cartItemCount = getCartItemCount();
   const itemsTotal = getCartTotal();
@@ -498,6 +503,63 @@ const Header = () => {
       setIsLoadingPayment(false);
     }
   }, [isAuthenticated, getToken, selectedPayment, createOrder, handleRazorpayPayment]);
+
+  const handleSearchChange = useCallback((e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    if (searchTimeout) clearTimeout(searchTimeout);
+    if (term.length < 2) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      try {
+        console.log('Searching for:', term);
+        const response = await apiService.searchProducts(term);
+        console.log('Search response:', response);
+        
+        if (response && response.success) {
+          const products = Array.isArray(response.data?.products) 
+            ? response.data.products 
+            : Array.isArray(response.data) 
+              ? response.data 
+              : [];
+          setSearchResults(products);
+          setShowSearchDropdown(products.length > 0);
+        } else {
+          console.error('Search failed:', response?.message || 'No data');
+          setSearchResults([]);
+          setShowSearchDropdown(false);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        setSearchResults([]);
+        setShowSearchDropdown(false);
+      }
+    }, 300);
+    setSearchTimeout(timeout);
+  }, [searchTimeout]);
+
+  const handleSearchBlur = useCallback(() => {
+    setTimeout(() => {
+      setShowSearchDropdown(false);
+    }, 200);
+  }, []);
+
+  const handleSelectProduct = useCallback((productId) => {
+    console.log('Navigating to product:', productId);
+    router.push(`/product/${productId}`);
+    setSearchTerm('');
+    setSearchResults([]);
+    setShowSearchDropdown(false);
+  }, [router]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) clearTimeout(searchTimeout);
+    };
+  }, [searchTimeout]);
 
   const CartItem = React.memo(({ item }) => {
     const [imageSrc, setImageSrc] = useState(item.product?.images?.[0]?.url || '/images/explore/tomato.png');
@@ -1089,14 +1151,56 @@ const Header = () => {
                 </nav>
               </div>
 
+              <div className="hidden sm:flex flex-1 max-w-md mx-4 relative">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onBlur={handleSearchBlur}
+                  aria-label="Search for products"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                {showSearchDropdown && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    {searchResults.map((product) => (
+                      <div
+                        key={product._id}
+                        onClick={() => handleSelectProduct(product._id)}
+                        className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-3"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded overflow-hidden">
+                          <Image
+                            src={product.images?.[0]?.url || '/images/explore/tomato.png'}
+                            width={40}
+                            height={40}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-800 truncate">{product.name}</div>
+                          <div className="text-sm text-gray-600">{product.unit}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showSearchDropdown && searchResults.length === 0 && searchTerm.length >= 2 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg p-3 text-gray-600">
+                    No products found for "{searchTerm}"
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                <button
+                {/* <button
                   onClick={redirectToPlayStore}
                   className="hidden sm:flex bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-medium items-center shadow-sm hover:shadow-md transition-shadow"
                 >
                   <Download size={14} className="mr-1" />
                   <span className="hidden md:inline">Download App</span>
-                </button>
+                </button> */}
 
                 <button
                   onClick={handleAuthAction}
@@ -1134,6 +1238,13 @@ const Header = () => {
                     )}
                   </button>
                 </div>
+                <button
+                  onClick={redirectToPlayStore}
+                  className="hidden sm:flex bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-medium items-center shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <Download size={14} className="mr-1" />
+                  <span className="hidden md:inline">Download App</span>
+                </button>
               </div>
             </div>
 
