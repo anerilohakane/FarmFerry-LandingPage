@@ -7,7 +7,7 @@ import {
   ShoppingCart, X, Minus, Plus, Info, Clock, Package,
   CheckCircle, Shield, PhoneCall, ArrowRight, LogIn, Truck,
   UserCircle, MapPin, HelpCircle, ArrowLeft, CreditCard,
-  Home, Box, Users, Phone, Download, LogOut, PartyPopper
+  Home, Box, Users, Phone, Download, LogOut, PartyPopper, Search
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCart } from '../../context/CartContext';
@@ -20,11 +20,11 @@ const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'products', label: 'Products', icon: Box },
-    { id: 'about', label: 'How it works', icon: Info },
-    { id: 'about-us', label: 'About us', icon: Users },
-    { id: 'contact', label: 'Contact', icon: Phone }
+    // { id: 'home', label: 'Home', icon: Home },
+    // { id: 'products', label: 'Products', icon: Box },
+    // { id: 'about', label: 'How it works', icon: Info },
+    // { id: 'about-us', label: 'About us', icon: Users },
+    // { id: 'contact', label: 'Contact', icon: Phone }
   ];
 
   const accountItems = [
@@ -101,11 +101,67 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
+  const [userLocation, setUserLocation] = useState('Fetching location...');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const placeholders = [
+    'Search rice...',
+    'Search chips...',
+    'Search milk...',
+    'Search Butter...',
+    'Search IceCream...',
+    'Search paneer...',
+    'Search Chocolate...',
+    'Search ColdDrink...',
+    'Search Fruits...',
+    'Search Dessert...',
+    'Search Juices...',
+    'Search vegetable...'
+  ];
 
   const cartItemCount = getCartItemCount();
   const itemsTotal = getCartTotal();
   const charges = getDeliveryCharges();
   const grandTotal = getGrandTotal();
+
+  // Animate placeholder text
+  useEffect(() => {
+    if (searchTerm) return; // Pause animation when user is typing
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+    }, 2000); // 2000 for 2-second animation
+    return () => clearInterval(interval);
+  }, [searchTerm, placeholders.length]);
+
+  // Fetch user's live location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+            );
+            const data = await response.json();
+            if (data && data.display_name) {
+              setUserLocation(data.display_name);
+            } else {
+              setUserLocation('Location not available');
+            }
+          } catch (error) {
+            console.error('Error fetching location:', error);
+            setUserLocation('Unable to fetch location');
+          }
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setUserLocation('Location access denied');
+        }
+      );
+    } else {
+      setUserLocation('Geolocation not supported');
+    }
+  }, []);
 
   const getToken = useCallback(() => {
     try {
@@ -1125,18 +1181,21 @@ const Header = () => {
       <header className="fixed w-full top-0 z-50 bg-white shadow-sm">
         <div className="border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-14 sm:h-16 md:h-20 items-center">
+            <div className="flex justify-between h-12 sm:h-14 md:h-18 items-center">
               <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-6">
                 <div className="flex-shrink-0">
                   <Image
                     src="/images/farmferry-logo.png"
-                    width={80}
-                    height={48}
+                    width={120}
+                    height={72}
                     alt="Farm Ferry"
-                    className="h-8 sm:h-10 md:h-12 w-auto"
+                    className="h-10 sm:h-12 md:h-16 w-auto"
                   />
                 </div>
-
+                <div className="hidden sm:flex flex-col">
+                  <h2 className="text-lg sm:text-xl md:text-lg font-bold text-black">Delivery in 30 minutes</h2>
+                  <p className="text-xs text-gray-600 truncate max-w-xs">{userLocation}</p>
+                </div>
                 <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
                   {navItems.map((item) => (
                     <button
@@ -1151,16 +1210,22 @@ const Header = () => {
                 </nav>
               </div>
 
-              <div className="hidden sm:flex flex-1 max-w-md mx-4 relative">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  onBlur={handleSearchBlur}
-                  aria-label="Search for products"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+              <div className="hidden sm:flex flex-1 max-w-lg mx-4 relative">
+                <div className="relative w-full">
+                  <Search
+                    size={18}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder={placeholders[placeholderIndex]}
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onBlur={handleSearchBlur}
+                    aria-label="Search for products"
+                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm transition-all duration-500"
+                  />
+                </div>
                 {showSearchDropdown && searchResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
                     {searchResults.map((product) => (
@@ -1169,15 +1234,6 @@ const Header = () => {
                         onClick={() => handleSelectProduct(product._id)}
                         className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-3"
                       >
-                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded overflow-hidden">
-                          <Image
-                            src={product.images?.[0]?.url || '/images/explore/tomato.png'}
-                            width={40}
-                            height={40}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-medium text-gray-800 truncate">{product.name}</div>
                           <div className="text-sm text-gray-600">{product.unit}</div>
@@ -1194,14 +1250,6 @@ const Header = () => {
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                {/* <button
-                  onClick={redirectToPlayStore}
-                  className="hidden sm:flex bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-medium items-center shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <Download size={14} className="mr-1" />
-                  <span className="hidden md:inline">Download App</span>
-                </button> */}
-
                 <button
                   onClick={handleAuthAction}
                   className="px-2 sm:px-3 py-1 sm:py-1.5 border border-green-600 text-green-600 rounded text-xs sm:text-sm font-medium hover:bg-green-50 transition-colors"
@@ -1285,7 +1333,7 @@ const Header = () => {
             >
               {checkoutStep === 'cart' && renderCart()}
               {checkoutStep === 'address' && renderAddressSelection()}
-              {checkoutStep === 'payment' && renderPaymentMethod()}
+              {checkoutStep == 'payment' && renderPaymentMethod()}
             </motion.div>
           </>
         )}
