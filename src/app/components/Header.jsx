@@ -661,7 +661,9 @@ const Header = () => {
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="font-medium text-gray-800 truncate text-sm sm:text-base">{item.product?.name || 'Product'}</h4>
-            <div className="text-gray-500 text-xs sm:text-sm">{item.product?.unit || ''}</div>
+              {item.product?.unit && (
+     <div className="text-gray-500 text-xs sm:text-sm">{item.product.unit}</div>
+   )}
             <div className="mt-1 flex items-center">
               <span className="font-bold text-green-700 text-sm sm:text-base">₹{totalPrice}</span>
               {originalPrice && item.discountedPrice && item.discountedPrice < item.price && (
