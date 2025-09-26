@@ -634,12 +634,7 @@ const Header = () => {
     const originalPrice = item.price ? (item.price * itemQty).toFixed(2) : null;
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="flex items-center justify-between bg-white p-3 sm:p-4 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow"
-      >
+     <div className="flex items-center justify-between bg-white p-3 sm:p-4 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow">s
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
             <Image
@@ -704,7 +699,7 @@ const Header = () => {
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   });
 
