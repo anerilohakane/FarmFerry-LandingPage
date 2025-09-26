@@ -627,26 +627,30 @@ const Header = () => {
   }, [searchTimeout]);
 
   const CartItem = React.memo(({ item }) => {
-    const [imageSrc, setImageSrc] = useState(item.product?.images?.[0]?.url || '/images/explore/tomato.png');
+    const getImageSrc = () => {
+      if (item.product?.images?.[0]?.url) {
+        return item.product.images[0].url;
+      }
+      return '/images/explore/tomato.png';
+    };
+
     const itemPrice = item.discountedPrice || item.price || 0;
     const itemQty = item.qty || item.quantity || 1;
     const totalPrice = (itemPrice * itemQty).toFixed(2);
     const originalPrice = item.price ? (item.price * itemQty).toFixed(2) : null;
 
     return (
-     <div className="flex items-center justify-between bg-white p-3 sm:p-4 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow">s
+      <div className="flex items-center justify-between bg-white p-3 sm:p-4 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
             <Image
-              src={imageSrc}
+              src={getImageSrc()}
               width={80}
               height={80}
-              alt={item.product.name}
+              alt={item.product?.name || 'Product'}
               className="rounded-lg object-cover border border-gray-100"
-              onLoadingComplete={(img) => {
-                if (img.naturalWidth === 0) {
-                  setImageSrc('/images/explore/tomato.png');
-                }
+              onError={(e) => {
+                e.target.src = '/images/explore/tomato.png';
               }}
             />
             {item.discountedPrice && item.discountedPrice < item.price && (
@@ -656,8 +660,8 @@ const Header = () => {
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-medium text-gray-800 truncate text-sm sm:text-base">{item.product.name}</h4>
-            <div className="text-gray-500 text-xs sm:text-sm">{item.product.unit}</div>
+            <h4 className="font-medium text-gray-800 truncate text-sm sm:text-base">{item.product?.name || 'Product'}</h4>
+            <div className="text-gray-500 text-xs sm:text-sm">{item.product?.unit || ''}</div>
             <div className="mt-1 flex items-center">
               <span className="font-bold text-green-700 text-sm sm:text-base">₹{totalPrice}</span>
               {originalPrice && item.discountedPrice && item.discountedPrice < item.price && (
