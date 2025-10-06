@@ -42,6 +42,8 @@ export const CartProvider = ({ children }) => {
     try {
       const savedTokens = localStorage.getItem('farmferry-tokens');
       const parsedTokens = savedTokens ? JSON.parse(savedTokens) : null;
+      // console.log('Retrieved token:', parsedTokens);
+      
       return parsedTokens?.accessToken;
     } catch (err) {
       console.error('Error getting token:', err);
