@@ -16,6 +16,40 @@ import { apiService } from '../../utils/api';
 import AuthModal from './AuthModal';
 import AddressList from './AddressList';
 
+const AlertModal = ({ isOpen, message, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center"
+    >
+      <motion.div
+        initial={{ scale: 0.8, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.8, y: 50 }}
+        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+        className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 text-center relative overflow-hidden"
+      >
+        <div className="absolute -top-10 -right-10 bg-green-100 rounded-full opacity-50 w-20 sm:w-24 h-20 sm:h-24"></div>
+        <div className="absolute -bottom-8 -left-8 bg-green-200 rounded-full opacity-30 w-16 sm:w-20 h-16 sm:h-20"></div>
+
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Alert</h2>
+        <p className="text-gray-600 text-sm sm:text-base mb-6">{message}</p>
+        <button
+          onClick={onClose}
+          className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm sm:text-base"
+        >
+          OK
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -97,12 +131,17 @@ const Header = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [userLocation, setUserLocation] = useState('Fetching location...');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
+  const [orderId, setOrderId] = useState(null);
+
   const placeholders = [
     'Search rice...',
     'Search chips...',
@@ -125,10 +164,10 @@ const Header = () => {
 
   // Animate placeholder text
   useEffect(() => {
-    if (searchTerm) return; // Pause animation when user is typing
+    if (searchTerm) return;
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
-    }, 2000); // 2000 for 2-second animation
+    }, 2000);
     return () => clearInterval(interval);
   }, [searchTerm, placeholders.length]);
 
@@ -222,6 +261,14 @@ const Header = () => {
     }
   }, [isAuthenticated, logout]);
 
+  const showAlert = useCallback((message) => {
+    setAlertModal({ isOpen: true, message });
+  }, []);
+
+  const closeAlert = useCallback(() => {
+    setAlertModal({ isOpen: false, message: '' });
+  }, []);
+
   const handleProceedToCheckout = useCallback(() => {
     if (!isAuthenticated) {
       setIsClosing(true);
@@ -268,11 +315,11 @@ const Header = () => {
 
   const handleProceedToPayment = useCallback(() => {
     if (!selectedAddress) {
-      alert('Please select a delivery address');
+      showAlert('Please select a delivery address');
       return;
     }
     setCheckoutStep('payment');
-  }, [selectedAddress]);
+  }, [selectedAddress, showAlert]);
 
   const handlePaymentSelection = useCallback((methodId) => {
     setSelectedPayment(methodId);
@@ -325,6 +372,7 @@ const Header = () => {
       });
 
       const result = await response.json();
+      console.log('createOrder response:', result); // Debug log
       if (response.ok) {
         return result;
       } else {
@@ -412,15 +460,16 @@ const Header = () => {
       const result = await createOrder(orderData);
 
       if (result.success) {
+        setOrderId(result.data?.orderId || result.data?._id || 'N/A');
         setShowOrderConfirmation(true);
       }
     } catch (error) {
       console.error('Error placing order:', error);
-      alert(error.message || 'Failed to place order. Please try again.');
+      showAlert(error.message || 'Failed to place order. Please try again.');
     } finally {
       setIsPlacingOrder(false);
     }
-  }, [prepareOrderData, createOrder]);
+  }, [prepareOrderData, createOrder, showAlert]);
 
   const loadRazorpayScript = () => {
     return new Promise((resolve, reject) => {
@@ -451,23 +500,20 @@ const Header = () => {
       }
 
       if (!window.Razorpay) {
-        alert('Payment gateway is currently unavailable. Please try again later or use Cash on Delivery.');
+        showAlert('Payment gateway is currently unavailable. Please try again later or use Cash on Delivery.');
         return;
       }
 
       const orderResponse = await createOrder(orderData);
-      if (!orderResponse.success) {
-        throw new Error(orderResponse.message || 'Failed to create order');
-      }
-
       const createdOrder = orderResponse.data;
       const orderRef = createdOrder.orderId || createdOrder._id || `FF_${Date.now()}`;
+      setOrderId(orderRef);
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY || 'rzp_test_Sbs1ZuKmKT2RXE',
         amount: Math.round((createdOrder.totalAmount || orderData.totalAmount) * 100),
         currency: 'INR',
-        name: 'Farm Ferry',
+        name: 'FarmFerry',
         description: `Order #${orderRef}`,
         handler: async (response) => {
           try {
@@ -478,10 +524,10 @@ const Header = () => {
             setSelectedAddress(null);
             setSelectedPayment('');
             clearCart();
-            alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+            showAlert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
           } catch (error) {
             console.error('Payment success handling error:', error);
-            alert('Payment completed but there was an issue. Please contact support.');
+            showAlert('Payment completed but there was an issue. Please contact support.');
           }
         },
         prefill: {
@@ -495,7 +541,7 @@ const Header = () => {
         modal: {
           ondismiss: () => {
             console.log('Payment modal dismissed');
-            alert('Payment was cancelled');
+            showAlert('Payment was cancelled');
           },
         },
         method: {
@@ -513,18 +559,18 @@ const Header = () => {
     } catch (error) {
       console.error('Razorpay payment error:', error);
       if (error.message.includes('timeout') || error.message.includes('Failed to load')) {
-        alert('Unable to connect to payment gateway. Please check your internet connection and try again.');
+        showAlert('Unable to connect to payment gateway. Please check your internet connection and try again.');
       } else {
-        alert('Failed to initiate payment. Please try again.');
+        showAlert('Failed to initiate payment. Please try again.');
       }
     }
-  }, [user, clearCart, createOrder]);
+  }, [user, clearCart, createOrder, showAlert]);
 
   const handleOpenPayment = useCallback(async (orderData) => {
     try {
       const token = getToken();
       if (!isAuthenticated || !token) {
-        alert('Please login to complete payment');
+        showAlert('Please login to complete payment');
         setIsClosing(true);
         setCartOpen(false);
         setTimeout(() => {
@@ -535,6 +581,7 @@ const Header = () => {
       }
 
       if (selectedPayment === 'online') {
+        console.log("Opening Razorpay");
         setIsLoadingPayment(true);
         try {
           await handleRazorpayPayment(orderData);
@@ -555,10 +602,10 @@ const Header = () => {
       }
     } catch (error) {
       console.error('Error opening payment:', error);
-      alert('Failed to initiate payment. Please try again.');
+      showAlert('Failed to initiate payment. Please try again.');
       setIsLoadingPayment(false);
     }
-  }, [isAuthenticated, getToken, selectedPayment, createOrder, handleRazorpayPayment]);
+  }, [isAuthenticated, getToken, selectedPayment, createOrder, handleRazorpayPayment, showAlert]);
 
   const handleSearchChange = useCallback((e) => {
     const term = e.target.value;
@@ -661,9 +708,9 @@ const Header = () => {
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="font-medium text-gray-800 truncate text-sm sm:text-base">{item.product?.name || 'Product'}</h4>
-              {item.product?.unit && (
-     <div className="text-gray-500 text-xs sm:text-sm">{item.product.unit}</div>
-   )}
+            {item.product?.unit && (
+              <div className="text-gray-500 text-xs sm:text-sm">{item.product.unit}</div>
+            )}
             <div className="mt-1 flex items-center">
               <span className="font-bold text-green-700 text-sm sm:text-base">₹{totalPrice}</span>
               {originalPrice && item.discountedPrice && item.discountedPrice < item.price && (
@@ -680,7 +727,8 @@ const Header = () => {
               onClick={() => {
                 try {
                   if (itemQty === 1) {
-                    removeFromCart(item._id || item.cartItemId);
+                    setItemToRemove(item._id || item.cartItemId);
+                    setShowRemoveConfirmation(true);
                   } else {
                     decreaseQty(item._id || item.cartItemId);
                   }
@@ -710,6 +758,131 @@ const Header = () => {
   });
 
   CartItem.displayName = 'CartItem';
+
+  const RemoveConfirmationModal = () => (
+    <motion.div
+      key="remove-confirmation-modal"
+      className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center"
+    >
+      <motion.div
+        className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 text-center relative overflow-hidden"
+      >
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">
+          Remove Item
+        </h2>
+        <p className="text-gray-600 text-sm sm:text-base mb-6">
+          Are you sure you want to remove this item from your cart?
+        </p>
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={() => {
+              setShowRemoveConfirmation(false);
+              setItemToRemove(null);
+            }}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors text-sm sm:text-base"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              if (itemToRemove) {
+                removeFromCart(itemToRemove);
+              }
+              setShowRemoveConfirmation(false);
+              setItemToRemove(null);
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm sm:text-base"
+          >
+            Remove
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+
+  const OrderConfirmation = ({ orderId }) => {
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        clearCart();
+        setCartOpen(false);
+        setCheckoutStep('cart');
+        setSelectedAddress(null);
+        setSelectedPayment('');
+        setShowOrderConfirmation(false);
+        setOrderId(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }, [clearCart, setCartOpen]);
+
+    return (
+      <motion.div
+        key="order-confirmation-modal"
+        className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center"
+      >
+        <motion.div
+          className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 text-center relative overflow-hidden"
+        >
+          <div className="absolute -top-10 -right-10 bg-green-100 rounded-full opacity-50 w-20 sm:w-24 h-20 sm:h-24"></div>
+          <div className="absolute -bottom-8 -left-8 bg-green-200 rounded-full opacity-30 w-16 sm:w-20 h-16 sm:h-20"></div>
+          
+          <motion.div
+            className="mb-4 sm:mb-6"
+          >
+            <PartyPopper size={48} className="mx-auto text-green-500" />
+          </motion.div>
+          
+          <motion.div
+            className="flex justify-center mb-4 sm:mb-6"
+          >
+            <div className="relative">
+              <div className="w-16 sm:w-20 h-16 sm:h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle size={32} className="text-green-600" />
+              </div>
+              <motion.div
+                className="absolute inset-0 rounded-full border-4 border-green-400"
+              />
+            </div>
+          </motion.div>
+          
+          <motion.h2
+            className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2"
+          >
+            Order Placed!
+          </motion.h2>
+          
+          <motion.p
+            className="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6"
+          >
+            Your order has been successfully placed.
+          </motion.p>
+          
+          <motion.div>
+            <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
+              <p className="text-xs sm:text-sm text-green-800 font-medium">
+                Order #{orderId || 'N/A'}
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                Estimated delivery: {charges.deliveryDate}
+              </p>
+            </div>
+          </motion.div>
+          
+          <motion.button
+            onClick={() => {
+              setShowOrderConfirmation(false);
+              clearCart();
+              setCartOpen(false);
+              setOrderId(null);
+            }}
+            className="mt-4 sm:mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
+          >
+            Continue Shopping
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    );
+  };
 
   const renderCart = () => (
     <>
@@ -756,7 +929,7 @@ const Header = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-green-50 to-blue-50 px-4 sm:px-6 py-4 flex items-start gap-4 mx-4 sm:mx-6 my-4 rounded-xl border border-green-100"
+            className="bg-gradient-to-r from-green-50 to-green-50 px-4 sm:px-6 py-4 flex items-start gap-4 mx-4 sm:mx-6 my-4 rounded-xl border border-green-100"
           >
             <div className="flex justify-center bg-white p-2 rounded-full shadow-sm border border-green-200 mt-1">
               <Clock size={18} className="text-green-600" />
@@ -777,8 +950,8 @@ const Header = () => {
           </motion.div>
 
           <div className="px-4 sm:px-6 pb-4 space-y-3">
-            {cart.map(item => (
-              <CartItem key={item._id || item.cartItemId} item={item} />
+            {cart.map((item, index) => (
+              <CartItem key={item._id || item.cartItemId || `cart-item-${index}`} item={item} />
             ))}
           </div>
 
@@ -984,7 +1157,7 @@ const Header = () => {
         <button
           onClick={() => {
             if (!selectedPayment) {
-              alert('Please select a payment method');
+              showAlert('Please select a payment method');
               return;
             }
             if (selectedPayment === 'cod') {
@@ -1038,7 +1211,6 @@ const Header = () => {
         <div className="mb-4 sm:mb-6">
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Welcome, {user?.name || 'User'}</h3>
           <p className="text-gray-600 text-xs sm:text-sm">{user?.phone || '9322506730'}</p>
-          {/* <p className="text-gray-600 text-xs sm:text-sm">{user?.email || 'user@example.com'}</p> */}
         </div>
 
         <div className="space-y-3 sm:space-y-4">
@@ -1069,120 +1241,6 @@ const Header = () => {
       </div>
     </>
   );
-
-  const OrderConfirmation = () => {
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        clearCart();
-        setCartOpen(false);
-        setCheckoutStep('cart');
-        setSelectedAddress(null);
-        setSelectedPayment('');
-        setShowOrderConfirmation(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }, [clearCart, setCartOpen]);
-
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center"
-      >
-        <motion.div
-          initial={{ scale: 0.8, rotateY: 90 }}
-          animate={{ scale: 1, rotateY: 0 }}
-          transition={{ 
-            type: "spring", 
-            damping: 15, 
-            stiffness: 200,
-            duration: 0.8
-          }}
-          className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 text-center relative overflow-hidden"
-        >
-          <div className="absolute -top-10 -right-10 bg-green-100 rounded-full opacity-50 w-20 sm:w-24 h-20 sm:h-24"></div>
-          <div className="absolute -bottom-8 -left-8 bg-green-200 rounded-full opacity-30 w-16 sm:w-20 h-16 sm:h-20"></div>
-          
-          <motion.div
-            initial={{ scale: 0, y: 100 }}
-            animate={{ scale: 1, y: 0 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="mb-4 sm:mb-6"
-          >
-            <PartyPopper size={48} className="mx-auto text-green-500" />
-          </motion.div>
-          
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-            className="flex justify-center mb-4 sm:mb-6"
-          >
-            <div className="relative">
-              <div className="w-16 sm:w-20 h-16 sm:h-20 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle size={32} className="text-green-600" />
-              </div>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-                className="absolute inset-0 rounded-full border-4 border-green-400"
-              />
-            </div>
-          </motion.div>
-          
-          <motion.h2 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2"
-          >
-            Order Placed!
-          </motion.h2>
-          
-          <motion.p 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6"
-          >
-            Your order has been successfully placed.
-          </motion.p>
-          
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
-          >
-            <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
-              <p className="text-xs sm:text-sm text-green-800 font-medium">
-                Order #{(Math.random() * 10000).toFixed(0).padStart(4, '0')}
-              </p>
-              <p className="text-xs text-green-600 mt-1">
-                Estimated delivery: {charges.deliveryDate}
-              </p>
-            </div>
-          </motion.div>
-          
-          <motion.button
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1.4 }}
-            onClick={() => {
-              setShowOrderConfirmation(false);
-              clearCart();
-              setCartOpen(false);
-            }}
-            className="mt-4 sm:mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
-          >
-            Continue Shopping
-          </motion.button>
-        </motion.div>
-      </motion.div>
-    );
-  };
 
   return (
     <>
@@ -1338,13 +1396,14 @@ const Header = () => {
         </div>
       </header>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {cartOpen && (
-          <>
+          <React.Fragment key="cart-slider">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black/30 z-[998]"
               onClick={handleCloseCart}
             />
@@ -1357,17 +1416,18 @@ const Header = () => {
             >
               {checkoutStep === 'cart' && renderCart()}
               {checkoutStep === 'address' && renderAddressSelection()}
-              {checkoutStep == 'payment' && renderPaymentMethod()}
+              {checkoutStep === 'payment' && renderPaymentMethod()}
             </motion.div>
-          </>
+          </React.Fragment>
         )}
 
         {profileOpen && isAuthenticated && (
-          <>
+          <React.Fragment key="profile-slider">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black/30 z-[998]"
               onClick={() => setProfileOpen(false)}
             />
@@ -1380,11 +1440,19 @@ const Header = () => {
             >
               {renderProfileSlider()}
             </motion.div>
-          </>
+          </React.Fragment>
         )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showOrderConfirmation && <OrderConfirmation />}
+
+        {showOrderConfirmation && <OrderConfirmation key="order-confirmation-modal" orderId={orderId} />}
+        {showRemoveConfirmation && <RemoveConfirmationModal key="remove-confirmation-modal" />}
+        {alertModal.isOpen && (
+          <AlertModal
+            key="alert-modal"
+            isOpen={alertModal.isOpen}
+            message={alertModal.message}
+            onClose={closeAlert}
+          />
+        )}
       </AnimatePresence>
     </>
   );

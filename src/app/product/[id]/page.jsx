@@ -1,3 +1,4 @@
+// app/products/[id]/page.jsx (complete product detail page code)
 'use client';
 
 import React, { useState, useEffect } from 'react';

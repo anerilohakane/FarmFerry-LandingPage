@@ -1,21 +1,22 @@
+// WhyChooseUs.jsx (complete modified code)
 'use client';
+
 import { ShoppingCartIcon, ArrowRight, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { apiService } from '../../utils/api';
 import { useCart } from '../../context/CartContext';
 
 export default function NewLaunches() {
+  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addedToCart, setAddedToCart] = useState({});
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
-  // Destructure cart context
   const { cart, addToCart: contextAddToCart, loading: cartLoading } = useCart();
-
   const timeoutRef = useRef({});
   const scrollerRef = useRef(null);
 
@@ -39,24 +40,15 @@ export default function NewLaunches() {
   // Handle add to cart with visual feedback
   const handleAddToCart = async (product) => {
     try {
-      // Prevent multiple clicks
       if (addedToCart[product._id] || cartLoading) return;
-
-      // Show visual feedback immediately
       setAddedToCart(prev => ({ ...prev, [product._id]: true }));
-
-      // Call the addToCart function from context
       await contextAddToCart(product);
-
-      // Store timeout for cleanup
       timeoutRef.current[product._id] = setTimeout(() => {
         setAddedToCart(prev => ({ ...prev, [product._id]: false }));
       }, 2000);
     } catch (err) {
       console.error('Error adding to cart:', err);
-      // Remove visual feedback if there's an error
       setAddedToCart(prev => ({ ...prev, [product._id]: false }));
-      // Show error message to user
       alert('Failed to add item to cart. Please try again.');
     }
   };
@@ -78,7 +70,6 @@ export default function NewLaunches() {
                                   (product.discountedPrice && product.discountedPrice < product.price));
             return hasValidOffer;
           });
-
           console.log(`Filtered ${productsWithOffers.length} products with offers`);
           setProducts(productsWithOffers);
         } else {
@@ -130,7 +121,7 @@ export default function NewLaunches() {
     const scroller = scrollerRef.current;
     if (scroller) {
       scroller.scrollBy({
-        left: -320, // Scroll by approximately 2 card widths
+        left: -320,
         behavior: 'smooth'
       });
     }
@@ -140,18 +131,17 @@ export default function NewLaunches() {
     const scroller = scrollerRef.current;
     if (scroller) {
       scroller.scrollBy({
-        left: 320, // Scroll by approximately 2 card widths
+        left: 320,
         behavior: 'smooth'
       });
     }
   };
 
-  // Update scroll button states when products change or component mounts
+  // Update scroll button states
   useEffect(() => {
     const timer = setTimeout(() => {
       checkScrollButtons();
     }, 100);
-
     return () => clearTimeout(timer);
   }, [products]);
 
@@ -163,7 +153,6 @@ export default function NewLaunches() {
     <section className="py-8 sm:py-12 px-4 sm:px-6 bg-gray-50">
       <div className="container mx-auto max-w-6xl">
         <div className="relative">
-          {/* Manual scroll buttons positioned absolutely */}
           {products.length > 0 && !loading && (
             <>
               <button
@@ -249,7 +238,6 @@ export default function NewLaunches() {
               </div>
             ) : (
               products.map((product) => {
-                // Validate product data
                 if (!product || !product._id || !product.name || !product.price) {
                   console.warn(`Invalid product data:`, product);
                   return null;
@@ -263,7 +251,11 @@ export default function NewLaunches() {
                 return (
                   <div
                     key={product._id}
-                    className="flex-shrink-0 w-48 sm:w-56 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1 relative group"
+                    className="flex-shrink-0 w-48 sm:w-56 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1 relative group cursor-pointer"
+                    onClick={(e) => {
+                      if (e.target.closest('button')) return;
+                      router.push(`/products/${product._id}`);
+                    }}
                   >
                     {(product.offerPercentage > 0 || (product.discountedPrice && product.discountedPrice < (product.price || 0))) && (
                       <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-lg z-10">
@@ -293,9 +285,7 @@ export default function NewLaunches() {
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-base text-green-600">{pricing.discounted}</span>
                           {pricing.hasDiscount && (
-                            <span className="text-xs text-gray-400 line-through">
-                              {pricing.original}
-                            </span>
+                            <span className="text-xs text-gray-400 line-through">{pricing.original}</span>
                           )}
                         </div>
                         {pricing.savings > 0 && (
@@ -323,7 +313,10 @@ export default function NewLaunches() {
                                 ? 'bg-green-700 text-white hover:bg-green-800'
                                 : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
                             } ${cartLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => handleAddToCart(product)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(product);
+                            }}
                             disabled={isAdded || cartLoading}
                           >
                             {isAdded ? (

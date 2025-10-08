@@ -1,13 +1,16 @@
+// app/page.jsx (complete modified category page code)
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ChevronDown, Clock } from 'lucide-react';
 import { apiService } from '../../utils/api';
 import { useCart } from '../../context/CartContext';
 
 // ProductCard Component
 const ProductCard = ({ product }) => {
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const { 
@@ -38,7 +41,6 @@ const ProductCard = ({ product }) => {
   };
 
   const handleAddToCart = async () => {
-    // Check if product is out of stock
     if (product.stockQuantity === 0) {
       alert('This product is out of stock and cannot be added to cart.');
       return;
@@ -111,9 +113,13 @@ const ProductCard = ({ product }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden relative group w-full"
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden relative group w-full cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={(e) => {
+        if (e.target.closest('button')) return;
+        router.push(`/products/${product._id}`);
+      }}
     >
       {/* Discount Badge */}
       {discountInfo.hasDiscount && (
@@ -178,7 +184,10 @@ const ProductCard = ({ product }) => {
           {/* Interactive Add/Quantity Controls */}
           {!isInCartItem ? (
             <button 
-              onClick={handleAddToCart}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToCart();
+              }}
               disabled={isAdding || cartLoading || product.stockQuantity === 0}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
                 isAdding || cartLoading || product.stockQuantity === 0
@@ -191,7 +200,10 @@ const ProductCard = ({ product }) => {
           ) : (
             <div className="flex items-center space-x-1.5 bg-green-50 rounded-md px-1.5 py-1">
               <button 
-                onClick={handleDecreaseQuantity}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDecreaseQuantity();
+                }}
                 disabled={cartLoading}
                 className="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
@@ -203,7 +215,10 @@ const ProductCard = ({ product }) => {
                 {cartQuantity}
               </span>
               <button 
-                onClick={handleIncreaseQuantity}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleIncreaseQuantity();
+                }}
                 disabled={cartLoading}
                 className="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
@@ -736,5 +751,4 @@ const ProductsPage = () => {
   );
 };
 
-// Only one default export
 export default ProductsPage;
