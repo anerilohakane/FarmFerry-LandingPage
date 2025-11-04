@@ -164,7 +164,7 @@ const Banner = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 mt-20"> {/* Increased to mt-20 */}
       {/* Desktop - Full Banner Carousel */}
       <div className="hidden md:block cursor-pointer rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
         <div className="relative w-full aspect-[3/1] max-h-[450px] min-h-[300px]">
@@ -206,7 +206,7 @@ const Banner = () => {
       </div>
 
       {/* Mobile - Half Banner Image + Text + Button */}
-      <div className="md:hidden bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="md:hidden bg-white rounded-xl shadow-md overflow-hidden mt-16"> {/* Added mt-16 for mobile */}
         <div className="flex flex-col">
           {/* Top Half: Banner Image Carousel */}
           <div className="relative w-full aspect-[3/2] max-h-[250px] min-h-[180px] bg-gradient-to-br from-green-50 to-emerald-50">
