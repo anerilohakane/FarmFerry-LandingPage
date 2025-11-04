@@ -504,6 +504,13 @@ const NewTasteProductCard = ({ product }) => {
           }}
         />
 
+        {/* Discount Badge */}
+        {discountInfo.hasDiscount && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-lg z-10">
+            {discountInfo.percentage}% OFF
+          </div>
+        )}
+
         {/* Add Button at Bottom Right Corner */}
         {!isInCartItem ? (
           <button
@@ -761,29 +768,40 @@ const NewTasteNewStartSection = () => {
   const [canScrollRight, setCanScrollRight] = useState(true);
 
   useEffect(() => {
-    fetchNewProducts();
+    fetchDiscountedProducts();
   }, []);
 
-  const fetchNewProducts = async () => {
+  const fetchDiscountedProducts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Fetch new/featured products
-      const response = await apiService.getAllProducts({
-        limit: 8,
-        sortBy: 'createdAt',
-        order: 'desc'
+      // Fetch products with offers/discounts
+      const response = await apiService.getProductsWithOffers({
+        limit: 20
       });
-      
-      if (response.success) {
-        setProducts(response.data.products || response.data || []);
+
+      if (response?.data?.products) {
+        // Filter products that have active discounts
+        const discountedProducts = response.data.products.filter(product => {
+          const hasValidDiscount = 
+            (product.offerPercentage > 0) ||
+            (product.discountedPrice && product.discountedPrice < product.price) ||
+            (product.hasActiveOffer && (product.offerPercentage > 0 || product.discountedPrice < product.price));
+          
+          return hasValidDiscount;
+        });
+        
+        console.log(`Filtered ${discountedProducts.length} products with discounts`);
+        setProducts(discountedProducts);
       } else {
-        setError('Failed to fetch new products');
+        console.log('No products in response:', response);
+        setProducts([]);
       }
     } catch (error) {
-      console.error('Error fetching new products:', error);
-      setError('Failed to load new products. Please try again later.');
+      console.error('Error fetching discounted products:', error);
+      setError('Failed to load discounted products. Please try again later.');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -837,7 +855,7 @@ const NewTasteNewStartSection = () => {
               New Taste, New Start
             </h2>
             <p className="text-gray-600 text-sm">
-              Exciting new products just landed in our store — shop them before they're gone!
+              Discover our latest products with exclusive discounts and offers!
             </p>
           </div>
 
@@ -869,13 +887,13 @@ const NewTasteNewStartSection = () => {
               New Taste, New Start
             </h2>
             <p className="text-gray-600 text-sm">
-              Exciting new products just landed in our store — shop them before they're gone!
+              Discover our latest products with exclusive discounts and offers!
             </p>
           </div>
           <div className="text-center py-8">
             <p className="text-red-600 mb-4">{error}</p>
             <button 
-              onClick={fetchNewProducts}
+              onClick={fetchDiscountedProducts}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm"
             >
               Try Again
@@ -896,14 +914,26 @@ const NewTasteNewStartSection = () => {
               New Taste, New Start
             </h2>
             <p className="text-gray-600 text-sm">
-              Exciting new products just landed in our store — shop them before they're gone!
+              Discover our latest products with exclusive discounts and offers!
             </p>
           </div>
 
           {/* Products Horizontal Scroll with Navigation */}
           {products.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-600 text-sm">No new products available at the moment.</p>
+              <div className="bg-white rounded-xl shadow-sm border border-yellow-200 p-8 max-w-md mx-auto">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">No Discounts Available</h3>
+                <p className="text-gray-600 mb-6 text-sm">
+                  We don't have any products with active discounts at the moment.
+                  Check back soon for exciting deals!
+                </p>
+                <button
+                  onClick={fetchDiscountedProducts}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                >
+                  Refresh Discounts
+                </button>
+              </div>
             </div>
           ) : (
             <div className="relative">
