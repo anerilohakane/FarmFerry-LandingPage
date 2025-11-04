@@ -583,6 +583,102 @@ const NewTasteProductCard = ({ product }) => {
   );
 };
 
+// Our Trusted Brands Component
+const OurTrustedBrandsSection = () => {
+  const brands = [
+    {
+      id: 1,
+      name: 'Chitale',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Chitale_Bandhu_Mithaiwale_logo.svg/2560px-Chitale_Bandhu_Mithaiwale_logo.svg.png',
+    },
+    {
+      id: 2,
+      name: 'Suhana',
+      logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRWFXAbWOfXQU_PVxRXBbD65c9zoXqzd6y1qg&s',
+    },
+    {
+      id: 3,
+      name: 'Britannia',
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/50/Britannia_Industries_logo_with_motto.svg/2560px-Britannia_Industries_logo_with_motto.svg.png',
+    },
+    {
+      id: 4,
+      name: 'Unilever',
+      logo: 'https://1000logos.net/wp-content/uploads/2017/06/Unilever-Logo.png',
+    },
+    {
+      id: 5,
+      name: 'Amul',
+      logo: 'https://www.samco.in/knowledge-center/wp-content/uploads/2022/01/amul-girl-mascot.jpg',
+    },
+    {
+      id: 6,
+      name: 'Nestle',
+      logo: 'https://images.seeklogo.com/logo-png/9/1/nestle-logo-png_seeklogo-98337.png',
+    },
+    {
+      id: 7,
+      name: 'Parle',
+      logo: 'https://1000logos.net/wp-content/uploads/2022/02/Parle-Logo.jpg',
+    },
+    {
+      id: 8,
+      name: 'Haldiram',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/2/25/Haldiram%27s_Logo_SVG.svg',
+    },
+    {
+      id: 9,
+      name: 'Mother Dairy',
+      logo: 'https://mir-s3-cdn-cf.behance.net/projects/404/58f939103264743.Y3JvcCw3MjcsNTY4LDE5MCwyMjM.jpg',
+    },
+    {
+      id: 10,
+      name: 'Patanjali',
+      logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxQ4crgfsf8bfVYfOknLKBJenshAIkDHHllg&s',
+    }
+  ];
+
+  return (
+    <div className="py-6 sm:py-8 bg-gray-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+            Our Trusted Brands
+          </h2>
+          <p className="text-gray-600 text-sm">
+            Discover the world of trusted brands that bring you quality, innovation, and reliability in every product.
+          </p>
+        </div>
+
+        {/* Brands Horizontal Scroll */}
+        <div
+          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {brands.map((brand) => (
+            <div
+              key={brand.id}
+              className="flex-shrink-0 w-[160px] bg-white rounded-xl p-6 flex items-center justify-center hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 group"
+            >
+              <div className="relative w-full h-16 flex items-center justify-center">
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&size=200&background=random`;
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main New Taste, New Start Section Component
 const NewTasteNewStartSection = () => {
   const [products, setProducts] = useState([]);
@@ -680,45 +776,50 @@ const NewTasteNewStartSection = () => {
   }
 
   return (
-    <div className="py-4 sm:py-6">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-            New Taste, New Start
-          </h2>
-          <p className="text-gray-600 text-sm">
-            Exciting new products just landed in our store — shop them before they're gone!
-          </p>
-        </div>
+    <>
+      <div className="py-4 sm:py-6">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8"> 
+          {/* Header */}
+          <div className="mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+              New Taste, New Start
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Exciting new products just landed in our store — shop them before they're gone!
+            </p>
+          </div>
 
-        {/* Products Horizontal Scroll */}
-        {products.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-600 text-sm">No new products available at the moment.</p>
-          </div>
-        ) : (
-          <div
-            ref={scrollContainerRef}
-            className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {products.map((product) => (
-              <NewTasteProductCard 
-                key={product._id || product.id} 
-                product={product} 
-              />
-            ))}
-          </div>
-        )}
+          {/* Products Horizontal Scroll */}
+          {products.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 text-sm">No new products available at the moment.</p>
+            </div>
+          ) : (
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {products.map((product) => (
+                <NewTasteProductCard 
+                  key={product._id || product.id} 
+                  product={product} 
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Our Trusted Brands Section */}
+      <OurTrustedBrandsSection />
 
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
       `}</style>
-    </div>
+    </>
   );
 };
 

@@ -4,7 +4,7 @@ import CategorySection from './components/CategorySection'
 import WhyChooseUs from './components/WhyChooseUs'
 import PopularProducts from './components/PopularProducts'
 import TestimonialsSection from './components/TestimonialsSection'
-import CTASection from './components/CTASection'
+// import CTASection from './components/CTASection'
 import Footer from './components/Footer'
 import Contact from './components/Contact'
 
@@ -18,7 +18,7 @@ export default function Home() {
         <WhyChooseUs />
         <PopularProducts />
         <TestimonialsSection />
-        <CTASection />
+        {/* <CTASection /> */}
         <Contact />
       </main>
       {/* <Footer /> */}
