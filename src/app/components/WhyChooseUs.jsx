@@ -504,13 +504,6 @@ const NewTasteProductCard = ({ product }) => {
           }}
         />
 
-        {/* Discount Badge */}
-        {discountInfo.hasDiscount && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-lg z-10">
-            {discountInfo.percentage}% OFF
-          </div>
-        )}
-
         {/* Add Button at Bottom Right Corner */}
         {!isInCartItem ? (
           <button
@@ -758,6 +751,15 @@ const OurTrustedBrandsSection = () => {
   );
 };
 
+// Helper function to check if a product has a discount
+const hasDiscount = (product) => {
+  const originalPrice = parseFloat(product.price) || 0;
+  const discountedPrice = parseFloat(product.discountedPrice) || 0;
+  const offerPercentage = parseFloat(product.offerPercentage) || 0;
+  
+  return (discountedPrice > 0 && discountedPrice < originalPrice) || offerPercentage > 0;
+};
+
 // Main New Taste, New Start Section Component
 const NewTasteNewStartSection = () => {
   const [products, setProducts] = useState([]);
@@ -776,32 +778,27 @@ const NewTasteNewStartSection = () => {
       setLoading(true);
       setError(null);
       
-      // Fetch products with offers/discounts
-      const response = await apiService.getProductsWithOffers({
-        limit: 20
+      // Fetch all products first
+      const response = await apiService.getAllProducts({
+        limit: 50, // Fetch more to filter discounted products
+        sortBy: 'createdAt',
+        order: 'desc'
       });
-
-      if (response?.data?.products) {
-        // Filter products that have active discounts
-        const discountedProducts = response.data.products.filter(product => {
-          const hasValidDiscount = 
-            (product.offerPercentage > 0) ||
-            (product.discountedPrice && product.discountedPrice < product.price) ||
-            (product.hasActiveOffer && (product.offerPercentage > 0 || product.discountedPrice < product.price));
-          
-          return hasValidDiscount;
-        });
+      
+      if (response.success) {
+        const allProducts = response.data.products || response.data || [];
         
-        console.log(`Filtered ${discountedProducts.length} products with discounts`);
-        setProducts(discountedProducts);
+        // Filter only discounted products
+        const discountedProducts = allProducts.filter(product => hasDiscount(product));
+        
+        // Take only the first 8 discounted products
+        setProducts(discountedProducts.slice(0, 8));
       } else {
-        console.log('No products in response:', response);
-        setProducts([]);
+        setError('Failed to fetch discounted products');
       }
     } catch (error) {
       console.error('Error fetching discounted products:', error);
       setError('Failed to load discounted products. Please try again later.');
-      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -855,7 +852,7 @@ const NewTasteNewStartSection = () => {
               New Taste, New Start
             </h2>
             <p className="text-gray-600 text-sm">
-              Discover our latest products with exclusive discounts and offers!
+              Exciting discounted products — shop them before they're gone!
             </p>
           </div>
 
@@ -887,7 +884,7 @@ const NewTasteNewStartSection = () => {
               New Taste, New Start
             </h2>
             <p className="text-gray-600 text-sm">
-              Discover our latest products with exclusive discounts and offers!
+              Exciting discounted products — shop them before they're gone!
             </p>
           </div>
           <div className="text-center py-8">
@@ -914,26 +911,14 @@ const NewTasteNewStartSection = () => {
               New Taste, New Start
             </h2>
             <p className="text-gray-600 text-sm">
-              Discover our latest products with exclusive discounts and offers!
+              Exciting discounted products — shop them before they're gone!
             </p>
           </div>
 
           {/* Products Horizontal Scroll with Navigation */}
           {products.length === 0 ? (
             <div className="text-center py-8">
-              <div className="bg-white rounded-xl shadow-sm border border-yellow-200 p-8 max-w-md mx-auto">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">No Discounts Available</h3>
-                <p className="text-gray-600 mb-6 text-sm">
-                  We don't have any products with active discounts at the moment.
-                  Check back soon for exciting deals!
-                </p>
-                <button
-                  onClick={fetchDiscountedProducts}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-                >
-                  Refresh Discounts
-                </button>
-              </div>
+              <p className="text-gray-600 text-sm">No discounted products available at the moment.</p>
             </div>
           ) : (
             <div className="relative">
