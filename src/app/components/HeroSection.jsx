@@ -164,7 +164,7 @@ const Banner = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 mt-16 sm:mt-20 lg:mt-24"> {/* Responsive margins */}
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8 mt-8 sm:mt-20 lg:mt-24"> {/* Reduced mobile margin */}
       {/* Desktop - Full Banner Carousel */}
       <div className="hidden md:block cursor-pointer rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
         <div className="relative w-full aspect-[3/1] max-h-[400px] lg:max-h-[450px] xl:max-h-[500px] min-h-[250px]">
@@ -246,10 +246,10 @@ const Banner = () => {
       </div>
 
       {/* Mobile - Half Banner Image + Text + Button */}
-      <div className="sm:hidden bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="sm:hidden bg-white rounded-xl shadow-md overflow-hidden mt-4"> {/* Reduced mobile margin */}
         <div className="flex flex-col">
           {/* Top Half: Banner Image Carousel */}
-          <div className="relative w-full aspect-[4/3] max-h-[200px] min-h-[150px] bg-gradient-to-br from-green-50 to-emerald-50">
+          <div className="relative w-full aspect-[4/3] max-h-[180px] min-h-[140px] bg-gradient-to-br from-green-50 to-emerald-50">
             {images.map((src, index) => (
               <Image
                 key={index}
@@ -283,13 +283,13 @@ const Banner = () => {
           </div>
 
           {/* Bottom Half: Text Content */}
-          <div className="p-3 sm:p-4 text-center space-y-2 bg-gradient-to-b from-white to-green-50">
-            <h1 className="text-sm sm:text-base font-extrabold text-gray-900">
+          <div className="p-3 text-center space-y-1.5 bg-gradient-to-b from-white to-green-50">
+            <h1 className="text-sm font-extrabold text-gray-900">
               Free VIP Membership Trial!
             </h1>
             
             <div className="space-y-0.5">
-              <p className="text-sm sm:text-base font-bold text-green-600">
+              <p className="text-sm font-bold text-green-600">
                 - Up to 40% Off!
               </p>
             </div>
@@ -301,7 +301,7 @@ const Banner = () => {
 
             <button 
               onClick={handleClick}
-              className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 mx-auto hover:bg-green-700 active:scale-95 transition-all w-full max-w-[200px] shadow-md hover:shadow-lg text-xs"
+              className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 mx-auto hover:bg-green-700 active:scale-95 transition-all w-full max-w-[180px] shadow-md hover:shadow-lg text-xs"
             >
               <Smartphone className="w-3.5 h-3.5" />
               GET IT ON Google Play
