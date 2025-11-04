@@ -364,7 +364,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Heart } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiService } from '../../utils/api';
 import { useCart } from '../../context/CartContext';
 
@@ -638,6 +638,47 @@ const OurTrustedBrandsSection = () => {
     }
   ];
 
+  const scrollContainerRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScrollButtons = () => {
+    const scroller = scrollContainerRef.current;
+    if (scroller) {
+      setCanScrollLeft(scroller.scrollLeft > 0);
+      setCanScrollRight(
+        scroller.scrollLeft < scroller.scrollWidth - scroller.clientWidth - 10
+      );
+    }
+  };
+
+  const scrollLeft = () => {
+    const scroller = scrollContainerRef.current;
+    if (scroller) {
+      scroller.scrollBy({
+        left: -320,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    const scroller = scrollContainerRef.current;
+    if (scroller) {
+      scroller.scrollBy({
+        left: 320,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkScrollButtons();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="py-6 sm:py-8 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -651,28 +692,59 @@ const OurTrustedBrandsSection = () => {
           </p>
         </div>
 
-        {/* Brands Horizontal Scroll */}
-        <div
-          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {brands.map((brand) => (
-            <div
-              key={brand.id}
-              className="flex-shrink-0 w-[160px] bg-white rounded-xl p-6 flex items-center justify-center hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 group"
-            >
-              <div className="relative w-full h-16 flex items-center justify-center">
-                <img
-                  src={brand.logo}
-                  alt={brand.name}
-                  className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&size=200&background=random`;
-                  }}
-                />
+        {/* Brands Horizontal Scroll with Navigation */}
+        <div className="relative">
+          {brands.length > 0 && (
+            <>
+              <button
+                onClick={scrollLeft}
+                disabled={!canScrollLeft}
+                className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                  canScrollLeft
+                    ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                }`}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={scrollRight}
+                disabled={!canScrollRight}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                  canScrollRight
+                    ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                }`}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </>
+          )}
+
+          <div
+            ref={scrollContainerRef}
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
+            onScroll={checkScrollButtons}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {brands.map((brand) => (
+              <div
+                key={brand.id}
+                className="flex-shrink-0 w-[160px] bg-white rounded-xl p-6 flex items-center justify-center hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 group"
+              >
+                <div className="relative w-full h-16 flex items-center justify-center">
+                  <img
+                    src={brand.logo}
+                    alt={brand.name}
+                    className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}&size=200&background=random`;
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -685,6 +757,8 @@ const NewTasteNewStartSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const scrollContainerRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   useEffect(() => {
     fetchNewProducts();
@@ -714,6 +788,43 @@ const NewTasteNewStartSection = () => {
       setLoading(false);
     }
   };
+
+  const checkScrollButtons = () => {
+    const scroller = scrollContainerRef.current;
+    if (scroller) {
+      setCanScrollLeft(scroller.scrollLeft > 0);
+      setCanScrollRight(
+        scroller.scrollLeft < scroller.scrollWidth - scroller.clientWidth - 10
+      );
+    }
+  };
+
+  const scrollLeft = () => {
+    const scroller = scrollContainerRef.current;
+    if (scroller) {
+      scroller.scrollBy({
+        left: -320,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    const scroller = scrollContainerRef.current;
+    if (scroller) {
+      scroller.scrollBy({
+        left: 320,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkScrollButtons();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [products]);
 
   // Loading state
   if (loading) {
@@ -789,23 +900,51 @@ const NewTasteNewStartSection = () => {
             </p>
           </div>
 
-          {/* Products Horizontal Scroll */}
+          {/* Products Horizontal Scroll with Navigation */}
           {products.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-600 text-sm">No new products available at the moment.</p>
             </div>
           ) : (
-            <div
-              ref={scrollContainerRef}
-              className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {products.map((product) => (
-                <NewTasteProductCard 
-                  key={product._id || product.id} 
-                  product={product} 
-                />
-              ))}
+            <div className="relative">
+              {/* Navigation Buttons */}
+              <button
+                onClick={scrollLeft}
+                disabled={!canScrollLeft}
+                className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                  canScrollLeft
+                    ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                }`}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={scrollRight}
+                disabled={!canScrollRight}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                  canScrollRight
+                    ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                }`}
+              >
+                <ChevronRight size={20} />
+              </button>
+
+              {/* Products Scroll Container */}
+              <div
+                ref={scrollContainerRef}
+                className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                onScroll={checkScrollButtons}
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {products.map((product) => (
+                  <NewTasteProductCard 
+                    key={product._id || product.id} 
+                    product={product} 
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
