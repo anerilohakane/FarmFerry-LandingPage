@@ -118,7 +118,8 @@ const ProductCard = ({ product }) => {
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
         if (e.target.closest('button')) return;
-        router.push(`/products/${product._id}`);
+        router.push(`/productDetails/${product._id}`);
+        console.log('Product ID:', id);
       }}
     >
       {/* Discount Badge */}

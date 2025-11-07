@@ -1,14 +1,14 @@
-// app/products/[id]/page.jsx (complete product detail page code)
+// app/products/[id]/page.jsx (COMPLETE CORRECTED CODE)
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';  // ← CORRECT IMPORT
 import Image from 'next/image';
 import { ArrowLeft, Plus, Minus, ShoppingCart, Star, Truck, Shield, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { apiService } from '../../../utils/api';
-import { useCart } from '../../../context/CartContext';
-import { useAuth } from '../../../context/AuthContext';
+import { apiService } from '../../../utils/api';         // ← CORRECT PATH
+import { useCart } from '../../../context/CartContext';  // ← CORRECT PATH
+import { useAuth } from '../../../context/AuthContext';  // ← CORRECT PATH
 
 const ProductPage = () => {
   const params = useParams();
@@ -27,7 +27,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await apiService.getProductById(params.id);
+        const response = await apiService.getProductById(params.id);  // ← params.id is correct
         
         if (response && response.success) {
           setProduct(response.data);
@@ -46,6 +46,8 @@ const ProductPage = () => {
       fetchProduct();
     }
   }, [params.id]);
+
+  // ... rest of your code remains exactly the same ...
 
   const handleAddToCart = async () => {
     if (!product) return;
@@ -139,9 +141,9 @@ const ProductPage = () => {
               <Image
                 src={product.images?.[selectedImage]?.url || '/images/explore/tomato.png'}
                 alt={product.name}
-                width={600}
-                height={600}
+                fill
                 className="w-full h-full object-cover"
+                sizes="600px"
               />
             </div>
             
@@ -158,9 +160,9 @@ const ProductPage = () => {
                     <Image
                       src={image.url}
                       alt={`${product.name} ${index + 1}`}
-                      width={80}
-                      height={80}
+                      fill
                       className="w-full h-full object-cover"
+                      sizes="80px"
                     />
                   </button>
                 ))}

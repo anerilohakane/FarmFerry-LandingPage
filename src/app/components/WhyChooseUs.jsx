@@ -683,17 +683,17 @@ const OurTrustedBrandsSection = () => {
     <div className="py-6 sm:py-8 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
             Our Trusted Brands
           </h2>
           <p className="text-gray-600 text-sm">
             Discover the world of trusted brands that bring you quality, innovation, and reliability in every product.
           </p>
-        </div>
+        </div> */}
 
         {/* Brands Horizontal Scroll with Navigation */}
-        <div className="relative">
+        {/* <div className="relative">
           {brands.length > 0 && (
             <>
               <button
@@ -745,7 +745,7 @@ const OurTrustedBrandsSection = () => {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
