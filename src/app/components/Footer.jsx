@@ -186,6 +186,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><a href="/terms" className="hover:text-green-500 transition-colors text-sm sm:text-base">Terms & Conditions</a></li>
               <li><a href="/privacy" className="hover:text-green-500 transition-colors text-sm sm:text-base">Privacy Policy</a></li>
+              <li><a href="/refund" className="hover:text-green-500 transition-colors text-sm sm:text-base">Refund Policy</a></li>
             </ul>
           </div>
         </div>
