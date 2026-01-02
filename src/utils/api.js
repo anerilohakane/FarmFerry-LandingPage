@@ -1,3 +1,5 @@
+'use client';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
 
 class ApiService {
@@ -46,6 +48,42 @@ class ApiService {
       body: JSON.stringify(userData),
     });
   }
+
+
+
+
+apiService = {
+  // STEP 1: Send OTP (register OR existing user)
+  sendOtp: async (mobile) => {
+    const res = await fetch(
+      `${API_BASE_URL}//api/v1/auth/register`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile,
+          name: 'FarmFerry User',
+        }),
+      }
+    );
+    return res.json();
+  },
+
+  // STEP 2: Verify OTP + Login
+  verifyOtpAndLogin: async (mobile, otp) => {
+    const res = await fetch(
+      `${API_BASE_URL}//api/v1/auth/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp }),
+      }
+    );
+    return res.json();
+  },
+};
+
+
 
   async loginCustomer(credentials) {
     return this.request('/auth/login/customer', {
