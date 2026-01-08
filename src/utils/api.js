@@ -1,6 +1,7 @@
 'use client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = '/api';
 
 class ApiService {
   constructor() {
@@ -12,7 +13,7 @@ class ApiService {
     console.log('API Request URL:', url);
     console.log('Base URL:', this.baseURL);
     console.log('Endpoint:', endpoint);
-    
+
     const defaultOptions = {
       headers: {
         'Content-Type': 'application/json',
@@ -27,12 +28,12 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -52,36 +53,36 @@ class ApiService {
 
 
 
-apiService = {
-  // STEP 1: Send OTP (register OR existing user)
-  sendOtp: async (mobile) => {
-    const res = await fetch(
-      `${API_BASE_URL}//api/v1/auth/register`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mobile,
-          name: 'FarmFerry User',
-        }),
-      }
-    );
-    return res.json();
-  },
+  apiService = {
+    // STEP 1: Send OTP (register OR existing user)
+    sendOtp: async (mobile) => {
+      const res = await fetch(
+        `${API_BASE_URL}//api/v1/auth/register`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mobile,
+            name: 'FarmFerry User',
+          }),
+        }
+      );
+      return res.json();
+    },
 
-  // STEP 2: Verify OTP + Login
-  verifyOtpAndLogin: async (mobile, otp) => {
-    const res = await fetch(
-      `${API_BASE_URL}//api/v1/auth/login`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile, otp }),
-      }
-    );
-    return res.json();
-  },
-};
+    // STEP 2: Verify OTP + Login
+    verifyOtpAndLogin: async (mobile, otp) => {
+      const res = await fetch(
+        `${API_BASE_URL}//api/v1/auth/login`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mobile, otp }),
+        }
+      );
+      return res.json();
+    },
+  };
 
 
 
@@ -171,13 +172,38 @@ apiService = {
   }
 
   // Category APIs
+
+
   async getAllCategories(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return this.request(`/categories?${queryString}`);
+    // OLD: inferred from products
+    // return this.request(`/supplier/products?${queryParams}`);
+
+    // NEW: Direct admin endpoint
+    const queryParams = new URLSearchParams(params).toString();
+    return this.request(`/admin/category?${queryParams}`);
   }
 
   async getCategoryById(id) {
-    return this.request(`/categories/${id}`);
+    try {
+      // Workaround: fetch all and find, since direct ID endpoint might be unstable or different
+      const response = await this.getAllCategories();
+      if (response.success) {
+        // Handle both 'categories' array or direct array
+        const categories = response.data.categories || response.data.items || (Array.isArray(response.data) ? response.data : []);
+        const cat = categories.find(c => c._id === id || c.id === id);
+
+        if (cat) {
+          return {
+            success: true,
+            data: { category: cat }
+          };
+        }
+      }
+      return { success: false, message: 'Category not found' };
+    } catch (error) {
+      console.error('Error in getCategoryById workaround:', error);
+      return { success: false, message: error.message };
+    }
   }
 
   async getCategoryTree() {
@@ -187,15 +213,15 @@ apiService = {
   // Product APIs
   async getAllProducts(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    console.log('API Request URL:', `/products?${queryString}`);
+    console.log('API Request URL:', `/supplier/products?${queryString}`);
     try {
-      const response = await this.request(`/products?${queryString}`);
+      const response = await this.request(`/supplier/products?${queryString}`);
       console.log('API Response:', response);
-      
+
       // Ensure we have a proper response structure
       if (response && response.success) {
         // Handle different possible response structures
-        const products = response.data?.products || response.data || response.products || [];
+        const products = response.data?.products || response.data?.items || response.data || response.products || [];
         console.log('Extracted products:', products.length);
         return {
           success: true,
@@ -219,6 +245,9 @@ apiService = {
       };
     }
   }
+
+
+
 
   async getProductsByCategory(categoryId, params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -254,7 +283,7 @@ apiService = {
     try {
       const response = await this.request(`/products?${queryString}`);
       console.log('Products with offers response:', response);
-      
+
       if (response && response.success) {
         const products = response.data?.products || response.data || response.products || [];
         console.log('Extracted products with offers:', products.length);
@@ -298,5 +327,6 @@ apiService = {
     return this.request('/settings/delivery-charges');
   }
 }
+
 
 export const apiService = new ApiService(); 

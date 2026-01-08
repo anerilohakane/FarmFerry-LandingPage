@@ -7,10 +7,10 @@ import Image from 'next/image';
 import { useAuth } from '../../context/AuthContext';
 
 const AuthModal = ({ open, onClose }) => {
-  const { 
+  const {
     sendLoginOtp,
     loginWithPhoneOtp,
-    loading 
+    loading
   } = useAuth();
 
   const [view, setView] = useState('phone-login'); // 'phone-login', 'phone-otp'
@@ -75,188 +75,188 @@ const AuthModal = ({ open, onClose }) => {
     }
   };
 
-const handleSendLoginOtp = async (e) => {
-  e.preventDefault();
+  const handleSendLoginOtp = async (e) => {
+    e.preventDefault();
 
-  console.log("=== Send OTP clicked ===");
-  console.log("Phone entered:", formData.phone);
+    console.log("=== Send OTP clicked ===");
+    console.log("Phone entered:", formData.phone);
 
-  if (formData.phone.length !== 10) {
-    setErrors({ phone: "Enter valid 10-digit phone number" });
-    console.log("Validation failed: phone length is not 10");
-    return;
-  }
-
-  try {
-    setErrors({});
-    setSuccessMessage("");
-
-    const API_URL = " http://localhost:3001/api/v1/auth/login/send-otp";
-    console.log("Fetching API URL:", API_URL);
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        phone: formData.phone,
-      }),
-    });
-
-    console.log("Fetch completed. Response object:", res);
-
-    if (!res.ok) {
-      console.error("Response not OK. Status:", res.status);
-      throw new Error(`HTTP error! status: ${res.status}`);
+    if (formData.phone.length !== 10) {
+      setErrors({ phone: "Enter valid 10-digit phone number" });
+      console.log("Validation failed: phone length is not 10");
+      return;
     }
 
-    const data = await res.json();
-    console.log("Response JSON data:", data);
+    try {
+      setErrors({});
+      setSuccessMessage("");
 
-    if (data.success) {
-      setSuccessMessage("OTP sent successfully");
-      setView("phone-otp");
-      setResendTimer(30);
-      console.log("OTP sent successfully, switching to OTP view");
-    } else {
-      setErrors({ general: data.message || "Failed to send OTP" });
-      console.log("Backend returned failure:", data);
-    }
-  } catch (err) {
-    console.error("OTP ERROR (fetch failed):", err);
-    setErrors({
-      general: "Failed to fetch. Backend or CORS issue.",
-    });
-  }
-};
+      const API_URL = "/api/auth/login/send-otp";
+      console.log("Fetching API URL:", API_URL);
 
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: formData.phone,
+        }),
+      });
 
-// const handlePhoneOtpLogin = async (e) => {
-//   e.preventDefault();
+      console.log("Fetch completed. Response object:", res);
 
-//   console.log("=== Verify OTP clicked ===");
-//   console.log("Phone:", formData.phone);
-//   console.log("OTP:", formData.otp);
-
-//   if (formData.otp.length !== 6) {
-//     setErrors({ otp: "Enter valid 6-digit OTP" });
-//     return;
-//   }
-
-//   try {
-//     setErrors({});
-//     setSuccessMessage("");
-
-//     const API_URL = "http://localhost:3001/api/v1/auth/login/verify-otp";
-//     console.log("Verifying OTP at:", API_URL);
-
-//     const res = await fetch(API_URL, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         phone: formData.phone,
-//         otp: formData.otp,
-//       }),
-//     });
-
-//     console.log("Verify OTP response:", res);
-
-//     if (!res.ok) {
-//       throw new Error(`HTTP error! Status: ${res.status}`);
-//     }
-
-//     const data = await res.json();
-//     console.log("Verify OTP JSON:", data);
-
-//     if (data.success) {
-//       setSuccessMessage("Login successful!");
-
-//       // OPTIONAL: store token
-//       if (data.token) {
-//         localStorage.setItem("token", data.token);
-//       }
-
-//       setTimeout(() => {
-//         onClose();
-//         resetForm();
-//       }, 1000);
-//     } else {
-//       setErrors({ general: data.message || "Invalid OTP" });
-//     }
-//   } catch (err) {
-//     console.error("VERIFY OTP ERROR:", err);
-//     setErrors({
-//       general: "Failed to verify OTP. Backend or CORS issue.",
-//     });
-//   }
-// };
-
-
-
-const handlePhoneOtpLogin = async (e) => {
-  e.preventDefault();
-
-  console.log("=== Verify OTP clicked ===");
-  console.log("Phone:", formData.phone);
-  console.log("OTP:", formData.otp);
-
-  if (formData.otp.length !== 6) {
-    setErrors({ otp: "Enter valid 6-digit OTP" });
-    return;
-  }
-
-  try {
-    setErrors({});
-    setSuccessMessage("");
-
-    const API_URL = "http://localhost:3001/api/v1/auth/login/verify-otp";
-    console.log("Calling verify-otp:", API_URL);
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        phone: formData.phone,
-        otp: formData.otp,
-      }),
-    });
-
-    console.log("Verify OTP response:", res);
-
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-
-    const data = await res.json();
-    console.log("Verify OTP JSON:", data);
-
-    if (data.success) {
-      setSuccessMessage("Login successful!");
-
-      // optional token save
-      if (data.token) {
-        localStorage.setItem("token", data.token);
+      if (!res.ok) {
+        console.error("Response not OK. Status:", res.status);
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
 
-      setTimeout(() => {
-        onClose();
-        resetForm();
-      }, 1000);
-    } else {
-      setErrors({ general: data.message || "Invalid OTP" });
+      const data = await res.json();
+      console.log("Response JSON data:", data);
+
+      if (data.success) {
+        setSuccessMessage("OTP sent successfully");
+        setView("phone-otp");
+        setResendTimer(30);
+        console.log("OTP sent successfully, switching to OTP view");
+      } else {
+        setErrors({ general: data.message || "Failed to send OTP" });
+        console.log("Backend returned failure:", data);
+      }
+    } catch (err) {
+      console.error("OTP ERROR (fetch failed):", err);
+      setErrors({
+        general: "Failed to fetch. Backend or CORS issue.",
+      });
     }
-  } catch (err) {
-    console.error("VERIFY OTP ERROR:", err);
-    setErrors({
-      general: "Failed to verify OTP. Backend or CORS issue.",
-    });
-  }
-};
+  };
+
+
+  // const handlePhoneOtpLogin = async (e) => {
+  //   e.preventDefault();
+
+  //   console.log("=== Verify OTP clicked ===");
+  //   console.log("Phone:", formData.phone);
+  //   console.log("OTP:", formData.otp);
+
+  //   if (formData.otp.length !== 6) {
+  //     setErrors({ otp: "Enter valid 6-digit OTP" });
+  //     return;
+  //   }
+
+  //   try {
+  //     setErrors({});
+  //     setSuccessMessage("");
+
+  //     const API_URL = "http://localhost:3001/api/v1/auth/login/verify-otp";
+  //     console.log("Verifying OTP at:", API_URL);
+
+  //     const res = await fetch(API_URL, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         phone: formData.phone,
+  //         otp: formData.otp,
+  //       }),
+  //     });
+
+  //     console.log("Verify OTP response:", res);
+
+  //     if (!res.ok) {
+  //       throw new Error(`HTTP error! Status: ${res.status}`);
+  //     }
+
+  //     const data = await res.json();
+  //     console.log("Verify OTP JSON:", data);
+
+  //     if (data.success) {
+  //       setSuccessMessage("Login successful!");
+
+  //       // OPTIONAL: store token
+  //       if (data.token) {
+  //         localStorage.setItem("token", data.token);
+  //       }
+
+  //       setTimeout(() => {
+  //         onClose();
+  //         resetForm();
+  //       }, 1000);
+  //     } else {
+  //       setErrors({ general: data.message || "Invalid OTP" });
+  //     }
+  //   } catch (err) {
+  //     console.error("VERIFY OTP ERROR:", err);
+  //     setErrors({
+  //       general: "Failed to verify OTP. Backend or CORS issue.",
+  //     });
+  //   }
+  // };
+
+
+
+  const handlePhoneOtpLogin = async (e) => {
+    e.preventDefault();
+
+    console.log("=== Verify OTP clicked ===");
+    console.log("Phone:", formData.phone);
+    console.log("OTP:", formData.otp);
+
+    if (formData.otp.length !== 6) {
+      setErrors({ otp: "Enter valid 6-digit OTP" });
+      return;
+    }
+
+    try {
+      setErrors({});
+      setSuccessMessage("");
+
+      const API_URL = "/api/auth/login/verify-otp";
+      console.log("Calling verify-otp:", API_URL);
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: formData.phone,
+          otp: formData.otp,
+        }),
+      });
+
+      console.log("Verify OTP response:", res);
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("Verify OTP JSON:", data);
+
+      if (data.success) {
+        setSuccessMessage("Login successful!");
+
+        // optional token save
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
+
+        setTimeout(() => {
+          onClose();
+          resetForm();
+        }, 1000);
+      } else {
+        setErrors({ general: data.message || "Invalid OTP" });
+      }
+    } catch (err) {
+      console.error("VERIFY OTP ERROR:", err);
+      setErrors({
+        general: "Failed to verify OTP. Backend or CORS issue.",
+      });
+    }
+  };
 
 
 
@@ -380,7 +380,7 @@ const handlePhoneOtpLogin = async (e) => {
                   <h1 className="text-lg sm:text-xl font-bold mb-1">Welcome to FarmFerry</h1>
                   <p className="text-sm text-gray-600">Enter your phone number to login</p>
                 </div>
-                
+
                 <form onSubmit={handleSendLoginOtp} className="space-y-3">
                   <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-green-600">
                     <div className="bg-white text-gray-700 px-3 flex items-center border-r border-gray-300">
@@ -404,15 +404,14 @@ const handlePhoneOtpLogin = async (e) => {
                     />
                   </div>
                   {errors.phone && <p className="text-red-500 text-xs text-left">{errors.phone}</p>}
-                  
+
                   <button
                     type="submit"
                     disabled={loading || formData.phone.length !== 10}
-                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                      formData.phone.length === 10 && !loading 
-                        ? 'bg-green-700 text-white hover:bg-green-800' 
-                        : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                    }`}
+                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${formData.phone.length === 10 && !loading
+                      ? 'bg-green-700 text-white hover:bg-green-800'
+                      : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      }`}
                   >
                     {loading ? 'Sending OTP...' : 'Send OTP'}
                   </button>
@@ -429,7 +428,7 @@ const handlePhoneOtpLogin = async (e) => {
                 className="space-y-4"
               >
                 <div className="flex justify-between items-center mb-4">
-                  <button 
+                  <button
                     onClick={() => setView('phone-login')}
                     className="p-2 rounded-full hover:bg-gray-100"
                   >
@@ -438,7 +437,7 @@ const handlePhoneOtpLogin = async (e) => {
                   <h1 className="text-lg sm:text-xl font-bold flex-1 text-center">Enter OTP</h1>
                   <div className="w-10"></div>
                 </div>
-                
+
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 mb-1">
                     We've sent a 6-digit verification code to
@@ -447,7 +446,7 @@ const handlePhoneOtpLogin = async (e) => {
                     +91{formData.phone}
                   </p>
                 </div>
-                
+
                 <form onSubmit={handlePhoneOtpLogin} className="space-y-3">
                   <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-green-600">
                     <input
@@ -464,27 +463,26 @@ const handlePhoneOtpLogin = async (e) => {
                     />
                   </div>
                   {errors.otp && <p className="text-red-500 text-xs text-left">{errors.otp}</p>}
-                  
+
                   <button
                     type="submit"
                     disabled={formData.otp.length !== 6 || loading}
-                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                      formData.otp.length === 6 && !loading
-                        ? 'bg-green-700 text-white hover:bg-green-800' 
-                        : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                    }`}
+                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${formData.otp.length === 6 && !loading
+                      ? 'bg-green-700 text-white hover:bg-green-800'
+                      : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      }`}
                   >
                     {loading ? 'Verifying...' : 'Verify & Login'}
                   </button>
-                  
+
                   <button
                     type="button"
                     onClick={handleResendLoginOtp}
                     disabled={resendTimer > 0 || loading}
                     className="text-green-700 text-sm font-medium hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
-                    {resendTimer > 0 
-                      ? `Resend OTP in ${resendTimer}s` 
+                    {resendTimer > 0
+                      ? `Resend OTP in ${resendTimer}s`
                       : "Didn't receive code? Resend OTP"
                     }
                   </button>

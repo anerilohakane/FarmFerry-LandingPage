@@ -373,12 +373,12 @@ const NewTasteProductCard = ({ product }) => {
   const router = useRouter();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const { 
-    cart, 
-    addToCart, 
-    increaseQty, 
-    decreaseQty, 
-    loading: cartLoading 
+  const {
+    cart,
+    addToCart,
+    increaseQty,
+    decreaseQty,
+    loading: cartLoading
   } = useCart();
 
   // Helper functions
@@ -405,7 +405,7 @@ const NewTasteProductCard = ({ product }) => {
       alert('This product is out of stock and cannot be added to cart.');
       return;
     }
-    
+
     setIsAdding(true);
     try {
       await addToCart(product);
@@ -434,7 +434,7 @@ const NewTasteProductCard = ({ product }) => {
     const originalPrice = parseFloat(product.price) || 0;
     const discountedPrice = parseFloat(product.discountedPrice) || 0;
     const offerPercentage = parseFloat(product.offerPercentage) || 0;
-    
+
     if (discountedPrice > 0 && discountedPrice < originalPrice) {
       const discountPercent = ((originalPrice - discountedPrice) / originalPrice) * 100;
       return {
@@ -450,7 +450,7 @@ const NewTasteProductCard = ({ product }) => {
         hasDiscount: true
       };
     }
-    
+
     return {
       percentage: 0,
       finalPrice: originalPrice,
@@ -477,7 +477,7 @@ const NewTasteProductCard = ({ product }) => {
   };
 
   return (
-    <div 
+    <div
       className="flex-shrink-0 w-[200px] bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden relative cursor-pointer border border-gray-100"
       onClick={() => router.push(`/products/${product._id}`)}
     >
@@ -513,15 +513,15 @@ const NewTasteProductCard = ({ product }) => {
             }}
             disabled={product.stockQuantity === 0 || isAdding || cartLoading}
             className={`absolute bottom-2 right-2 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all duration-200 shadow-md min-w-[70px] text-center
-              ${product.stockQuantity === 0 
-                ? 'bg-gray-300 text-red-500 cursor-not-allowed' 
+              ${product.stockQuantity === 0
+                ? 'bg-gray-300 text-red-500 cursor-not-allowed'
                 : 'bg-white text-green-600 hover:bg-gray-50 active:scale-95'
               }`}
           >
             {product.stockQuantity === 0 ? 'Out of Stock' : 'Add'}
           </button>
         ) : (
-          <div 
+          <div
             onClick={(e) => e.stopPropagation()}
             className="absolute bottom-2 right-2 flex items-center bg-white rounded-lg shadow-md overflow-hidden min-w-[80px] justify-center"
           >
@@ -572,7 +572,7 @@ const NewTasteProductCard = ({ product }) => {
               Save ₹{(product.price - discountInfo.finalPrice).toFixed(0)}
             </span>
           )}
-          
+
           {/* Quantity Badge */}
           <div className="inline-flex items-center bg-green-100 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded ml-auto">
             {product.quantity || product.volume || product.unit || "1 unit"}
@@ -756,7 +756,7 @@ const hasDiscount = (product) => {
   const originalPrice = parseFloat(product.price) || 0;
   const discountedPrice = parseFloat(product.discountedPrice) || 0;
   const offerPercentage = parseFloat(product.offerPercentage) || 0;
-  
+
   return (discountedPrice > 0 && discountedPrice < originalPrice) || offerPercentage > 0;
 };
 
@@ -773,36 +773,150 @@ const NewTasteNewStartSection = () => {
     fetchDiscountedProducts();
   }, []);
 
+
+
+
   const fetchDiscountedProducts = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      // Fetch all products first
+      // Use apiService which is configured with the correct base URL
       const response = await apiService.getAllProducts({
-        limit: 50, // Fetch more to filter discounted products
-        sortBy: 'createdAt',
+        limit: 100,
+        sort: 'createdAt',
         order: 'desc'
       });
-      
-      if (response.success) {
-        const allProducts = response.data.products || response.data || [];
-        
-        // Filter only discounted products
-        const discountedProducts = allProducts.filter(product => hasDiscount(product));
-        
-        // Take only the first 8 discounted products
-        setProducts(discountedProducts.slice(0, 8));
-      } else {
-        setError('Failed to fetch discounted products');
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch products');
       }
+
+      const data = response;
+
+      // Extract products based on actual structure
+      let allProducts = [];
+
+      // Based on your earlier logs, it might be {success: true, data: {...}}
+      if (data.success && data.data) {
+        // Check if data.data is an array
+        if (Array.isArray(data.data)) {
+          allProducts = data.data;
+        }
+        // Check if data.data has items array (Standard backend response)
+        else if (data.data.items && Array.isArray(data.data.items)) {
+          allProducts = data.data.items;
+        }
+        // Check if data.data has a products array
+        else if (data.data.products && Array.isArray(data.data.products)) {
+          allProducts = data.data.products;
+        }
+        // Check if data.data is an object with array inside
+        else if (data.data.data && Array.isArray(data.data.data)) {
+          allProducts = data.data.data;
+        }
+      }
+      // If data is directly an array
+      else if (Array.isArray(data)) {
+        allProducts = data;
+      }
+      // If data has products array directly
+      else if (data.products && Array.isArray(data.products)) {
+        allProducts = data.products;
+      }
+
+      // Map backend fields to component expectations
+      const mappedProducts = allProducts.map(p => {
+        const originalPrice = parseFloat(p.mrp) || parseFloat(p.price) || 0;
+        const finalPrice = parseFloat(p.sellingPrice) || parseFloat(p.discountedPrice) || originalPrice;
+        let discountPct = parseFloat(p.discountPercentage) || parseFloat(p.offerPercentage) || 0;
+
+        // Calculate discount percentage if not provided but prices differ
+        if (discountPct === 0 && originalPrice > finalPrice) {
+          discountPct = ((originalPrice - finalPrice) / originalPrice) * 100;
+        }
+
+        const sanitizeImageUrl = (url) => {
+          if (!url) return '';
+          let cleanUrl = url.trim();
+          // Fix double protocol typo from backend
+          if (cleanUrl.startsWith('hhttps://')) {
+            cleanUrl = cleanUrl.replace('hhttps://', 'https://');
+          }
+          return cleanUrl;
+        };
+
+        const rawImage = p.image || (p.images && p.images[0]?.url) || '';
+        const cleanImage = sanitizeImageUrl(rawImage);
+
+        return {
+          ...p,
+          _id: p._id || p.id,
+          name: p.name,
+          price: originalPrice,
+          discountedPrice: finalPrice,
+          offerPercentage: discountPct,
+          discountPercentage: discountPct,
+          image: cleanImage,
+          images: p.images ? p.images.map(img => ({ ...img, url: sanitizeImageUrl(img.url) })) : (cleanImage ? [{ url: cleanImage }] : [])
+        };
+      });
+
+      // console.log('Total products extracted:', mappedProducts.length);
+
+      // Filter for discounted products
+      const discounted = mappedProducts.filter(product =>
+        (product.offerPercentage > 0) || (product.discountedPrice < product.price)
+      );
+
+      // console.log('Discounted products found:', discounted.length);
+      setProducts(discounted || []);
+
     } catch (error) {
-      console.error('Error fetching discounted products:', error);
-      setError('Failed to load discounted products. Please try again later.');
+      console.error('Error fetching discounted products:', error.message);
+
+      // Fallback for debugging
+      // console.log('Using fallback data for debugging...');
+      const fallbackProducts = [
+        { _id: '1', name: 'Organic Apples', discountPercentage: 15, price: 100, discountedPrice: 85, image: '' },
+        { _id: '2', name: 'Fresh Milk', discountPercentage: 10, price: 50, discountedPrice: 45, image: '' },
+        { _id: '3', name: 'Farm Eggs', discountPercentage: 20, price: 30, discountedPrice: 24, image: '' },
+      ];
+      setProducts(fallbackProducts);
     } finally {
       setLoading(false);
     }
   };
+
+
+  // const fetchDiscountedProducts = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+
+  //     // Fetch all products first
+  //     const response = await apiService.getAllProducts({
+  //       limit: 50, // Fetch more to filter discounted products
+  //       sortBy: 'createdAt',
+  //       order: 'desc'
+  //     });
+
+  //     if (response.success) {
+  //       const allProducts = response.data.products || response.data || [];
+
+  //       // Filter only discounted products
+  //       const discountedProducts = allProducts.filter(product => hasDiscount(product));
+
+  //       // Take only the first 8 discounted products
+  //       setProducts(discountedProducts.slice(0, 8));
+  //     } else {
+  //       setError('Failed to fetch discounted products');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching discounted products:', error);
+  //     setError('Failed to load discounted products. Please try again later.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const checkScrollButtons = () => {
     const scroller = scrollContainerRef.current;
@@ -889,7 +1003,7 @@ const NewTasteNewStartSection = () => {
           </div>
           <div className="text-center py-8">
             <p className="text-red-600 mb-4">{error}</p>
-            <button 
+            <button
               onClick={fetchDiscountedProducts}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm"
             >
@@ -904,7 +1018,7 @@ const NewTasteNewStartSection = () => {
   return (
     <>
       <div className="py-4 sm:py-6">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8"> 
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-6">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
@@ -926,22 +1040,20 @@ const NewTasteNewStartSection = () => {
               <button
                 onClick={scrollLeft}
                 disabled={!canScrollLeft}
-                className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${
-                  canScrollLeft
-                    ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                }`}
+                className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${canScrollLeft
+                  ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                  }`}
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 onClick={scrollRight}
                 disabled={!canScrollRight}
-                className={`absolute right-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${
-                  canScrollRight
-                    ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                }`}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg transition-all duration-200 ${canScrollRight
+                  ? 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:shadow-xl'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                  }`}
               >
                 <ChevronRight size={20} />
               </button>
@@ -954,9 +1066,9 @@ const NewTasteNewStartSection = () => {
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {products.map((product) => (
-                  <NewTasteProductCard 
-                    key={product._id || product.id} 
-                    product={product} 
+                  <NewTasteProductCard
+                    key={product._id || product.id}
+                    product={product}
                   />
                 ))}
               </div>

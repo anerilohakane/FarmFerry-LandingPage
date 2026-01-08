@@ -21,15 +21,18 @@ export default function Footer() {
     try {
       setLoading(true)
       setError(null)
-      
+
       // Fetch root categories (parent = null)
       const response = await apiService.getAllCategories({
         parent: 'null',
         includeInactive: 'false'
       })
-      
+
       if (response.success) {
-        setCategories(response.data.categories)
+        const cats = response.data.categories || response.data.items || (Array.isArray(response.data) ? response.data : []);
+        // Filter out subcategories from footer
+        const filteredCats = cats.filter(cat => !['Leafy Greens', 'Milk', 'Vegetables'].includes(cat.name));
+        setCategories(filteredCats);
       } else {
         setError('Failed to fetch categories')
       }
@@ -145,7 +148,7 @@ export default function Footer() {
               </ul>
             ) : (
               <ul className="space-y-2">
-                {categories.slice(0, 5).map((category) => (
+                {(categories || []).slice(0, 5).map((category) => (
                   <li key={category._id}>
                     <button
                       onClick={() => handleCategoryClick(category)}

@@ -13,12 +13,12 @@ const ProductCard = ({ product }) => {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const { 
-    cart, 
-    addToCart, 
-    increaseQty, 
-    decreaseQty, 
-    loading: cartLoading 
+  const {
+    cart,
+    addToCart,
+    increaseQty,
+    decreaseQty,
+    loading: cartLoading
   } = useCart();
 
   // Helper functions to check if item is in cart and get quantity
@@ -45,7 +45,7 @@ const ProductCard = ({ product }) => {
       alert('This product is out of stock and cannot be added to cart.');
       return;
     }
-    
+
     setIsAdding(true);
     try {
       await addToCart(product);
@@ -74,7 +74,7 @@ const ProductCard = ({ product }) => {
     const originalPrice = parseFloat(product.price) || 0;
     const discountedPrice = parseFloat(product.discountedPrice) || 0;
     const offerPercentage = parseFloat(product.offerPercentage) || 0;
-    
+
     if (discountedPrice > 0 && discountedPrice < originalPrice) {
       const discountPercent = ((originalPrice - discountedPrice) / originalPrice) * 100;
       return {
@@ -90,7 +90,7 @@ const ProductCard = ({ product }) => {
         hasDiscount: true
       };
     }
-    
+
     return {
       percentage: 0,
       finalPrice: originalPrice,
@@ -102,17 +102,23 @@ const ProductCard = ({ product }) => {
 
   // Get the best image URL
   const getImageUrl = () => {
+    let url = "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80";
+
     if (product.images && product.images.length > 0) {
-      return product.images[0].url;
+      url = product.images[0].url;
+    } else if (product.image) {
+      url = product.image;
     }
-    if (product.image) {
-      return product.image;
+
+    // Fix common protocol typo
+    if (url && typeof url === 'string' && url.startsWith('hhttps://')) {
+      return url.replace('hhttps://', 'https://');
     }
-    return "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80";
+    return url;
   };
 
   return (
-    <div 
+    <div
       className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden relative group w-full cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -181,26 +187,25 @@ const ProductCard = ({ product }) => {
               <span className="text-xs text-gray-500 line-through">₹{product.price}</span>
             )}
           </div>
-            
+
           {/* Interactive Add/Quantity Controls */}
           {!isInCartItem ? (
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleAddToCart();
               }}
               disabled={isAdding || cartLoading || product.stockQuantity === 0}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                isAdding || cartLoading || product.stockQuantity === 0
-                  ? 'bg-gray-400 cursor-not-allowed text-white' 
-                  : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
-              }`}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${isAdding || cartLoading || product.stockQuantity === 0
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
+                }`}
             >
               {product.stockQuantity === 0 ? 'OUT OF STOCK' : isAdding ? 'ADDING...' : 'ADD'}
             </button>
           ) : (
             <div className="flex items-center space-x-1.5 bg-green-50 rounded-md px-1.5 py-1">
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDecreaseQuantity();
@@ -215,7 +220,7 @@ const ProductCard = ({ product }) => {
               <span className="text-xs font-medium text-gray-900 min-w-[16px] text-center">
                 {cartQuantity}
               </span>
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleIncreaseQuantity();
@@ -275,11 +280,10 @@ const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
 
   return (
     <div
-      className={`flex items-center space-x-2.5 px-3 py-2.5 cursor-pointer transition-all duration-200 rounded-md ${
-        isActive 
-          ? 'bg-green-50 border-l-3 border-green-600 text-green-700 shadow-sm' 
-          : 'hover:bg-gray-50 text-gray-700 hover:shadow-sm'
-      }`}
+      className={`flex items-center space-x-2.5 px-3 py-2.5 cursor-pointer transition-all duration-200 rounded-md ${isActive
+        ? 'bg-green-50 border-l-3 border-green-600 text-green-700 shadow-sm'
+        : 'hover:bg-gray-50 text-gray-700 hover:shadow-sm'
+        }`}
       onClick={() => onClick(subcategory._id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -288,7 +292,7 @@ const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
       <div className="relative w-8 h-8 rounded-md overflow-hidden flex-shrink-0">
         {subcategory.image?.url && !imageError ? (
           <Image
-            src={subcategory.image.url}
+            src={subcategory.image.url.startsWith('hhttps://') ? subcategory.image.url.replace('hhttps://', 'https://') : subcategory.image.url}
             alt={subcategory.name}
             fill
             sizes="32px"
@@ -308,7 +312,7 @@ const SubcategoryItem = ({ subcategory, isActive, onClick }) => {
           <div className="absolute inset-0 bg-opacity-10 rounded-md border border-green-500"></div>
         )}
       </div>
-      
+
       <span className="text-sm font-medium">{subcategory.name}</span>
       {isActive && (
         <div className="ml-auto">
@@ -341,7 +345,7 @@ const ProductsPage = () => {
     const categoryParam = urlParams.get('category');
     const categoryIdParam = urlParams.get('categoryId');
     const showAllParam = urlParams.get('showAll');
-    
+
     if (categoryParam && categoryIdParam) {
       setSelectedCategory(categoryParam);
       setSelectedCategoryId(categoryIdParam);
@@ -367,16 +371,28 @@ const ProductsPage = () => {
       }
 
       if (subcategoriesResponse.success) {
-        const subcats = subcategoriesResponse.data.categories;
-        setSubcategories(subcats);
-        
+        let subs = [];
+        if (subcategoriesResponse.data?.categories) {
+          subs = subcategoriesResponse.data.categories;
+        } else if (subcategoriesResponse.data?.items) {
+          subs = subcategoriesResponse.data.items;
+        } else if (Array.isArray(subcategoriesResponse.data)) {
+          subs = subcategoriesResponse.data;
+        }
+
+        // Client-side filter to ensure we ONLY get subcategories of this parent
+        // This is necessary because the API might return all categories ignoring the parent param
+        const filteredSubs = subs.filter(sub => sub.parent === categoryId || sub.parentId === categoryId);
+
+        setSubcategories(filteredSubs);
+
         if (showAll) {
-          await fetchAllProductsFromCategory(categoryId, subcats);
+          await fetchAllProductsFromCategory(categoryId, filteredSubs);
           setSelectedSubcategory(categoryId);
         } else {
-          if (subcats.length > 0) {
-            setSelectedSubcategory(subcats[0]._id);
-            await fetchProductsForSubcategory(subcats[0]._id);
+          if (filteredSubs.length > 0) {
+            setSelectedSubcategory(filteredSubs[0]._id);
+            await fetchProductsForSubcategory(filteredSubs[0]._id);
           } else {
             await fetchProductsForSubcategory(categoryId);
           }
@@ -395,21 +411,30 @@ const ProductsPage = () => {
   const fetchAllProductsFromCategory = async (mainCategoryId, subcategories) => {
     try {
       const allCategoryIds = [mainCategoryId, ...subcategories.map(sub => sub._id)];
-      const productPromises = allCategoryIds.map(categoryId => 
+      const productPromises = allCategoryIds.map(categoryId =>
         apiService.getAllProducts({ category: categoryId, limit: 100, inStock: 'true' })
+          .then(response => ({ response, categoryId })) // Pass categoryId along
       );
-      
-      const responses = await Promise.all(productPromises);
+
+      const results = await Promise.all(productPromises);
       let allProducts = [];
-      
-      responses.forEach((response) => {
+
+      results.forEach(({ response, categoryId }) => {
         if (response.success) {
-          const products = response.data?.products || response.data || response.products || [];
-          allProducts = [...allProducts, ...products];
+          const products = response.data?.products || response.data?.items || response.data || response.products || [];
+          // Client-side filter: Only keep products that actually belong to this category (or its subcategories)
+          // This fixes the issue where the API returns ALL products regardless of the filter
+          const filteredHelper = products.filter(p => {
+            const pCatId = p.categoryId || p.category?.id || p.category?._id;
+            return pCatId === categoryId;
+          });
+          allProducts = [...allProducts, ...filteredHelper];
         }
       });
-      
-      setCurrentProducts(allProducts);
+
+      // Dedup products by _id to prevent duplicate keys
+      const uniqueProducts = Array.from(new Map(allProducts.map(item => [item._id, item])).values());
+      setCurrentProducts(uniqueProducts);
     } catch (error) {
       console.error('Error fetching all products from category:', error);
       setError('Failed to fetch all products. Please try again.');
@@ -420,8 +445,13 @@ const ProductsPage = () => {
     try {
       const response = await apiService.getAllProducts({ category: subcategoryId, limit: 100, inStock: 'true' });
       if (response.success) {
-        const products = response.data.products || response.data || response.products || [];
-        setCurrentProducts(products);
+        const products = response.data.products || response.data?.items || response.data || response.products || [];
+        // Client-side filter
+        const filteredProducts = products.filter(p => {
+          const pCatId = p.categoryId || p.category?.id || p.category?._id;
+          return pCatId === subcategoryId;
+        });
+        setCurrentProducts(filteredProducts);
       } else {
         setError('Failed to fetch subcategory products. Please try again.');
       }
@@ -434,15 +464,20 @@ const ProductsPage = () => {
   const handleSubcategoryClick = async (subcategoryId) => {
     setIsLoading(true);
     setSelectedSubcategory(subcategoryId);
-    
+
     try {
       if (subcategoryId === selectedCategoryId) {
         await fetchAllProductsFromCategory(selectedCategoryId, subcategories);
       } else {
         const response = await apiService.getAllProducts({ category: subcategoryId, limit: 100, inStock: 'true' });
         if (response.success) {
-          const products = response.data.products || response.data || response.products || [];
-          setCurrentProducts(products);
+          const products = response.data.products || response.data?.items || response.data || response.products || [];
+          // Client-side filter
+          const filteredProducts = products.filter(p => {
+            const pCatId = p.categoryId || p.category?.id || p.category?._id;
+            return pCatId === subcategoryId;
+          });
+          setCurrentProducts(filteredProducts);
         } else {
           setError('Failed to fetch subcategory products. Please try again.');
         }
@@ -457,7 +492,7 @@ const ProductsPage = () => {
 
   // Filter and sort products
   const filteredAndSortedProducts = React.useMemo(() => {
-    let filtered = currentProducts.filter(product => 
+    let filtered = currentProducts.filter(product =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -488,7 +523,7 @@ const ProductsPage = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
           <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-3">
-              <button 
+              <button
                 onClick={() => window.history.back()}
                 className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
               >
@@ -537,7 +572,7 @@ const ProductsPage = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
           <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-3">
-              <button 
+              <button
                 onClick={() => window.history.back()}
                 className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
               >
@@ -551,7 +586,7 @@ const ProductsPage = () => {
           <div className="text-center py-8">
             <div className="bg-white rounded-lg shadow-sm border border-red-100 p-4 max-w-sm mx-auto">
               <p className="text-red-600 mb-3 text-sm">{error}</p>
-              <button 
+              <button
                 onClick={() => fetchCategoryData(selectedCategoryId)}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
               >
@@ -570,7 +605,7 @@ const ProductsPage = () => {
         {/* Header */}
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               onClick={() => window.history.back()}
               className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
             >
@@ -591,7 +626,7 @@ const ProductsPage = () => {
               ) : null}
             </div>
           </div>
-          
+
           {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
             {/* Search Bar */}
@@ -607,7 +642,7 @@ const ProductsPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            
+
             {/* Sort Dropdown */}
             <select
               value={sortBy}
@@ -618,7 +653,7 @@ const ProductsPage = () => {
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
             </select>
-            
+
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -647,7 +682,7 @@ const ProductsPage = () => {
                 Clear All
               </button>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Price Range</label>
@@ -669,7 +704,7 @@ const ProductsPage = () => {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Results</label>
                 <p className="text-sm text-gray-600">
@@ -692,8 +727,8 @@ const ProductsPage = () => {
                   <>
                     {/* Show "All Products" option for main category */}
                     <SubcategoryItem
-                      subcategory={{ 
-                        _id: selectedCategoryId, 
+                      subcategory={{
+                        _id: selectedCategoryId,
                         name: `All ${selectedCategory} Products`,
                         image: selectedCategoryImage
                       }}
