@@ -24,10 +24,12 @@ import {
   FileText,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import AddressList from '../components/AddressList';
 import FarmFerryFAQ from '../components/FarmFerryFAQ';
 import AccountPrivacy from '../components/AccountPrivacy';
+import { apiService } from '../../utils/api';
 
 // Account items for sidebar
 const accountItems = [
@@ -37,7 +39,6 @@ const accountItems = [
   { id: 'privacy', label: 'Account Privacy', icon: Shield },
 ];
 
-const Base_Url = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const getToken = () => {
   try {
@@ -179,6 +180,105 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirm
   );
 };
 
+// Rate Order Modal
+const RateOrderModal = ({ isOpen, onClose, onSubmit, isSubmitting }) => {
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [feedback, setFeedback] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setRating(0);
+      setFeedback("");
+    }
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (rating === 0) return;
+    onSubmit(rating, feedback);
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-xl p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">Rate Your Order</h3>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                <XCircle size={24} />
+              </button>
+            </div>
+
+            <p className="text-gray-600 mb-6 text-center">
+              How was your experience with this order?
+            </p>
+
+            <div className="flex justify-center space-x-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onMouseEnter={() => setHoveredRating(star)}
+                  onMouseLeave={() => setHoveredRating(0)}
+                  onClick={() => setRating(star)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star
+                    size={32}
+                    className={`${star <= (hoveredRating || rating)
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
+                      } transition-colors`}
+                  />
+                </button>
+              ))}
+            </div>
+
+            <div className="mb-6">
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Share your feedback (optional)..."
+                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none h-32"
+              />
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={rating === 0 || isSubmitting}
+              className={`w-full py-3 rounded-lg font-medium text-white transition-colors ${rating === 0 || isSubmitting
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700 shadow-md"
+                }`}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center justify-center">
+                  <Loader size={20} className="animate-spin mr-2" />
+                  Submitting...
+                </div>
+              ) : (
+                "Submit Review"
+              )}
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const OrdersList = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -188,6 +288,12 @@ const OrdersList = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
+  const [debugApiInfo, setDebugApiInfo] = useState(null);
+
+  // Rating State
+  const [showRateModal, setShowRateModal] = useState(false);
+  const [orderToRate, setOrderToRate] = useState(null);
+  const [isRating, setIsRating] = useState(false);
 
   const summary = calculateOrderSummary(orders);
 
@@ -208,31 +314,54 @@ const OrdersList = () => {
           return;
         }
 
-        const response = await fetch(`${Base_Url}/orders/my-orders`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        const response = await apiService.getMyOrders();
+
+        // apiService handles non-ok responses by throwing or returning structured error
+        if (!response.success) {
+          console.error('Fetch orders failed:', response);
+          if (response.message === 'Unauthorized' || response.message?.includes('token')) {
+            setError('Session expired. Please log in again.');
+            // Optional: Trigger logout flow here
+          } else {
+            setError(response.message || 'Failed to fetch orders');
           }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch orders');
+          setLoading(false);
+          return;
         }
 
-        const res = await response.json();
-        const data = res.data.orders;
+        console.log('Fetching orders response:', response);
 
+        // Robustly handle various response structures
         let ordersData = [];
-        if (Array.isArray(data)) {
-          ordersData = data;
-        } else if (data.data && Array.isArray(data.data)) {
-          ordersData = data.data;
-        } else if (data.orders && Array.isArray(data.orders)) {
-          ordersData = data.orders;
-        } else if (data.result && Array.isArray(data.result)) {
-          ordersData = data.result;
+
+        // Strategy 1: response.data.orders (Standard structure)
+        if (response.data?.orders && Array.isArray(response.data.orders)) {
+          ordersData = response.data.orders;
+        }
+        // Strategy 2: response.orders (Flat structure)
+        else if (response.orders && Array.isArray(response.orders)) {
+          ordersData = response.orders;
+        }
+        // Strategy 3: response.data (Direct array in data)
+        else if (Array.isArray(response.data)) {
+          ordersData = response.data;
+        }
+        // Strategy 4: response.data.data (Nested data)
+        else if (response.data?.data && Array.isArray(response.data.data)) {
+          ordersData = response.data.data;
+        }
+        // Strategy 5: response.data.items (Pagination structure)
+        else if (response.data?.items && Array.isArray(response.data.items)) {
+          ordersData = response.data.items;
+        }
+        // Strategy 6: Direct array response (unlikely but possible if apiService wraps it)
+        else if (Array.isArray(response)) {
+          ordersData = response;
         }
 
+        console.log('Parsed orders data:', ordersData);
         setOrders(ordersData);
+
 
       } catch (err) {
         setError(err.message);
@@ -248,27 +377,10 @@ const OrdersList = () => {
   const handleCancelOrder = async (orderId) => {
     setCancellingId(orderId);
     try {
-      const token = getToken();
+      const response = await apiService.cancelOrder(orderId, 'Cancelled by customer');
 
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(`${Base_Url}/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          status: 'cancelled',
-          cancellationReason: 'Cancelled by customer'
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to cancel order');
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to cancel order');
       }
 
       // Update the order status locally with animation
@@ -306,6 +418,40 @@ const OrdersList = () => {
   const openCancelModal = (orderId) => {
     setOrderToCancel(orderId);
     setShowCancelModal(true);
+  };
+
+  const openRateModal = (orderId) => {
+    setOrderToRate(orderId);
+    setShowRateModal(true);
+  };
+
+  const handleRateSubmit = async (rating, feedback) => {
+    if (!orderToRate) return;
+    setIsRating(true);
+    try {
+      const response = await apiService.rateOrder(orderToRate, rating, feedback);
+      if (response.success) {
+        setToast({
+          show: true,
+          message: 'Thank you for your feedback!',
+          type: 'success'
+        });
+        setShowRateModal(false);
+        setOrderToRate(null);
+        // Optionally update local order state if we display the rating
+      } else {
+        throw new Error(response.message || 'Failed to submit rating');
+      }
+    } catch (error) {
+      console.error('Rating failed:', error);
+      setToast({
+        show: true,
+        message: error.message || 'Something went wrong.',
+        type: 'error'
+      });
+    } finally {
+      setIsRating(false);
+    }
   };
 
   const toggleOrderDetails = (orderId) => {
@@ -389,7 +535,6 @@ const OrdersList = () => {
           className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg transition-colors shadow-sm hover:shadow-md"
         >
           Start Shopping
-          <ArrowRight size={18} className="ml-2" />
         </Link>
       </motion.div>
     );
@@ -659,6 +804,14 @@ const OrdersList = () => {
         cancelText="Keep Order"
       />
 
+      {/* Rate Order Modal */}
+      <RateOrderModal
+        isOpen={showRateModal}
+        onClose={() => setShowRateModal(false)}
+        onSubmit={handleRateSubmit}
+        isSubmitting={isRating}
+      />
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-green-800 flex items-center">
           <ShoppingBag size={24} className="text-green-600 mr-2" />
@@ -695,9 +848,9 @@ const OrdersList = () => {
                         <FileText size={18} className="text-green-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-800">Order #{order.orderId}</p>
+                        <p className="font-semibold text-gray-800">Order #{order.orderId || order._id?.slice(-8).toUpperCase() || 'N/A'}</p>
                         <p className="text-gray-500 text-sm">
-                          {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                          {new Date(order.createdAt || Date.now()).toLocaleDateString('en-IN', {
                             weekday: 'short',
                             day: 'numeric',
                             month: 'short',
@@ -760,8 +913,19 @@ const OrdersList = () => {
                                 transition={{ delay: index * 0.1 }}
                               >
                                 <div className="flex items-center">
-                                  <div className="w-12 h-12 bg-green-100 rounded-md flex items-center justify-center mr-3">
-                                    <Package size={16} className="text-green-600" />
+                                  <div className="w-12 h-12 bg-gray-100 rounded-md flex-shrink-0 relative overflow-hidden mr-3">
+                                    {item.product?.images?.[0]?.url ? (
+                                      <Image
+                                        src={item.product.images[0].url}
+                                        alt={item.product.name || 'Product'}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex items-center justify-center h-full w-full bg-green-100">
+                                        <Package size={16} className="text-green-600" />
+                                      </div>
+                                    )}
                                   </div>
                                   <div>
                                     <p className="font-medium text-gray-800">
@@ -852,6 +1016,10 @@ const OrdersList = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openRateModal(order._id);
+                              }}
                               className="bg-blue-600 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center"
                             >
                               <Star size={16} className="mr-1.5" />
@@ -859,28 +1027,32 @@ const OrdersList = () => {
                             </motion.button>
                           )}
                           {order.status === 'pending' && (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openCancelModal(order._id);
-                              }}
-                              disabled={cancellingId === order._id}
-                              className="text-red-600 hover:text-red-800 font-medium text-sm px-4 py-2 border border-red-300 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                            >
-                              {cancellingId === order._id ? (
-                                <>
-                                  <Loader size={16} className="animate-spin mr-1.5" />
-                                  Cancelling...
-                                </>
-                              ) : (
-                                <>
-                                  <XCircle size={16} className="mr-1.5" />
-                                  Cancel Order
-                                </>
-                              )}
-                            </motion.button>
+                            <div className="flex space-x-2">
+
+
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCancelModal(order._id);
+                                }}
+                                disabled={cancellingId === order._id}
+                                className="text-red-600 hover:text-red-800 font-medium text-sm px-4 py-2 border border-red-300 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                              >
+                                {cancellingId === order._id ? (
+                                  <>
+                                    <Loader size={16} className="animate-spin mr-1.5" />
+                                    Cancelling...
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle size={16} className="mr-1.5" />
+                                    Cancel Order
+                                  </>
+                                )}
+                              </motion.button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -945,7 +1117,7 @@ const MyAccount = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Add padding-top to account for fixed navbar (approx 80px + some spacing) */}
-      <div className="pt-24">
+      <div className="pt-32 md:pt-40">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}

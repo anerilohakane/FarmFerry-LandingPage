@@ -3,63 +3,50 @@
 import React, { useState } from 'react';
 import { ArrowLeft, MapPin, Home, Briefcase, MoreHorizontal } from 'lucide-react';
 import GoogleMapsPicker from './GoogleMapsPicker';
+import { apiService } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
-const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
+const AddressForm = ({ newAddress, setNewAddress, onCancel, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const { isAuthenticated } = useAuth();
 
   const handleSaveAddress = async () => {
     setIsSubmitting(true);
     try {
-      const savedTokens = localStorage.getItem("farmferry-tokens");
-      const parsedTokens = savedTokens ? JSON.parse(savedTokens) : null;
-      const token = parsedTokens?.accessToken;
-
-      if (!token) {
+      if (!isAuthenticated) {
         alert("⚠️ Please login to save your address");
         return;
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/address`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(newAddress),
-        }
-      );
+      const res = await apiService.addAddress(newAddress);
 
-      const contentType = res.headers.get("content-type");
-      let data;
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        throw new Error(`Unexpected response: ${text}`);
-      }
-
-      if (res.ok) {
-        alert("✅ Address saved successfully!");
+      if (res.success) {
+        setShowSuccess(true);
+        // Clear form data
         setNewAddress({
-          name: "",
-          type: "home",
-          street: "",
-          city: "",
-          state: "",
-          postalCode: "",
-          country: "",
-          phone: "",
+          type: 'home',
+          street: '',
+          city: '',
+          state: '',
+          postalCode: '',
+          country: '',
+          phone: '',
           isDefault: false,
         });
-        if (onCancel) onCancel();
+
+        // Wait for animation then close
+        setTimeout(() => {
+          if (onSuccess) onSuccess();
+          else if (onCancel) onCancel();
+        }, 2000);
       } else {
-        alert(data?.message || "❌ Failed to save address");
+        alert(res.message || "❌ Failed to save address");
       }
     } catch (error) {
       console.error("Save error:", error);
-      alert("⚠️ Something went wrong. Please try again.");
+      alert(`⚠️ Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +72,46 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
     work: <Briefcase size={16} />,
     other: <MoreHorizontal size={16} />,
   };
+
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+        <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center transform scale-100 animate-in fade-in zoom-in duration-300 max-w-sm w-full mx-4">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
+            <div className="bg-green-500 rounded-full p-3 shadow-md">
+              <svg
+                className="w-10 h-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="3"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2 text-center">Success!</h3>
+          <p className="text-gray-500 text-center font-medium">
+            Address saved successfully
+          </p>
+          <div className="mt-8 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div className="bg-green-500 h-full rounded-full animate-[progress_2s_ease-in-out_forwards]" style={{ width: '0%', animation: 'fillProgress 2s linear forwards' }}></div>
+            <style jsx>{`
+                          @keyframes fillProgress {
+                              from { width: 0%; }
+                              to { width: 100%; }
+                          }
+                      `}</style>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-4 max-w-3xl mx-auto">
@@ -116,11 +143,10 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
               <button
                 key={type}
                 onClick={() => setNewAddress({ ...newAddress, type })}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                  newAddress.type === type
-                    ? 'bg-green-100 text-green-800 border border-green-300 shadow-sm'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${newAddress.type === type
+                  ? 'bg-green-100 text-green-800 border border-green-300 shadow-sm'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
+                  }`}
               >
                 {addressTypeIcons[type]}
                 {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -136,7 +162,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
               Pick Address with Maps
             </label>
           </div>
-          
+
           <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
             <GoogleMapsPicker
               onLocationSelect={handleAddressSelect}
@@ -240,7 +266,7 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
           </label>
           <input
             type="text"
-            value={newAddress.name}
+            value={newAddress.name || ''}
             onChange={(e) =>
               setNewAddress({ ...newAddress, name: e.target.value })
             }
@@ -304,16 +330,15 @@ const AddressForm = ({ newAddress, setNewAddress, onCancel }) => {
             !newAddress.country ||
             isSubmitting
           }
-          className={`flex-1 px-4 py-3 font-medium rounded-lg transition ${
-            !newAddress.street ||
+          className={`flex-1 px-4 py-3 font-medium rounded-lg transition ${!newAddress.street ||
             !newAddress.city ||
             !newAddress.state ||
             !newAddress.postalCode ||
             !newAddress.country ||
             isSubmitting
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-700 text-white shadow-md'
-          }`}
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-green-600 hover:bg-green-700 text-white shadow-md'
+            }`}
         >
           {isSubmitting ? (
             <div className="flex items-center justify-center">

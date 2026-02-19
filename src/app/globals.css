@@ -1,2 +1,38 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #0F9D58;
+  /* Google Green / Farm Green */
+  --color-secondary: #F4B400;
+  /* Gold/Yellow */
+  --font-family-sans: 'Quicksand', system-ui, sans-serif;
+  /* Rounded friendly font */
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased text-gray-800 bg-white;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold;
+  }
+}
+
+/* Custom Utilities if needed */
+.text-primary {
+  color: var(--color-primary);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.font-cookie {
+  font-family: var(--font-cookie), cursive;
+}

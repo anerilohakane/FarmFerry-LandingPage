@@ -1,27 +1,28 @@
-import Header from './components/Header'
 import HeroSection from './components/HeroSection'
 import CategorySection from './components/CategorySection'
-import WhyChooseUs from './components/WhyChooseUs'
+import PromoBanners from './components/PromoBanners'
 import PopularProducts from './components/PopularProducts'
-import TestimonialsSection from './components/TestimonialsSection'
-// import CTASection from './components/CTASection'
-import Footer from './components/Footer'
-import Contact from './components/Contact'
+import WhyChooseUs from './components/WhyChooseUs'
+import FarmToHomeSection from './components/FarmToHomeSection'
+
+import NaturalFreshSection from './components/NaturalFreshSection'
+import PartnerWithUsSection from './components/PartnerWithUsSection'
+import BottomBanner from './components/BottomBanner'
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen w-full bg-[#f9f8f3]">
-      {/* <Header /> */}
+    <div className="flex flex-col min-h-screen w-full bg-white">
       <main className="flex-grow">
         <HeroSection />
         <CategorySection />
-        <WhyChooseUs />
+        <PromoBanners />
         <PopularProducts />
-        <TestimonialsSection />
-        {/* <CTASection /> */}
-        <Contact />
+        <WhyChooseUs /> {/* Feature Section: Organic And Fresh */}
+        <FarmToHomeSection />
+        <NaturalFreshSection />
+        <PartnerWithUsSection />
+
       </main>
-      {/* <Footer /> */}
     </div>
   )
 }

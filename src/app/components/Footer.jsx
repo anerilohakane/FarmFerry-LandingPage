@@ -1,204 +1,93 @@
 'use client'
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, Home, Box, Info, Users, PhoneCall } from 'lucide-react'
+import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, ArrowRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { apiService } from '../../utils/api'
 
 export default function Footer() {
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [isMounted, setIsMounted] = useState(false)
-  const router = useRouter()
-  const pathname = usePathname()
-
-  useEffect(() => {
-    setIsMounted(true)
-    fetchCategories()
-  }, [])
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // Fetch root categories (parent = null)
-      const response = await apiService.getAllCategories({
-        parent: 'null',
-        includeInactive: 'false'
-      })
-
-      if (response.success) {
-        const cats = response.data.categories || response.data.items || (Array.isArray(response.data) ? response.data : []);
-        // Filter out subcategories from footer
-        const filteredCats = cats.filter(cat => !['Leafy Greens', 'Milk', 'Vegetables'].includes(cat.name));
-        setCategories(filteredCats);
-      } else {
-        setError('Failed to fetch categories')
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error)
-      setError('Failed to load categories')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCategoryClick = (category) => {
-    // Navigate to products page with category parameter
-    window.location.href = `/products?category=${encodeURIComponent(category.name)}&categoryId=${category._id}&showAll=true`
-  }
-
-  const scrollToSection = (sectionId) => {
-    if (pathname !== '/') {
-      if (sectionId === 'home') {
-        router.push('/')
-      } else {
-        router.push(`/#${sectionId}`)
-      }
-      return
-    }
-
-    if (sectionId === 'home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-
-    const element = document.getElementById(sectionId)
-    if (element) {
-      const headerHeight = 80
-      const elementPosition = element.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.pageYOffset - headerHeight
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      })
-    }
-  }
-
-  const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'products', label: 'Products', icon: Box },
-    { id: 'about', label: 'How it works', icon: Info },
-    { id: 'about-us', label: 'About us', icon: Users },
-    { id: 'contact', label: 'Contact', icon: PhoneCall }
-  ]
+  const router = useRouter();
 
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8" id='contact'>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {/* Brand info and socials */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          {/* 1. Brand info and socials */}
           <div className="w-full">
-            <h3 className="text-2xl font-bold text-green-500 mb-4">
-              Farm<span className="text-yellow-500">Ferry</span>
+            <h3 className="text-2xl font-bold text-green-500 mb-4 flex items-center gap-2">
+              <img src="/images/farmferry-logo.png" alt="Logo" className="w-8 h-8 rounded-full" />
+              Farm<span className="text-white">Ferry</span>
             </h3>
-            <p className="mb-4 text-sm sm:text-base">
-              Delivering farm-fresh groceries directly to your doorstep.
+            <p className="mb-6 text-sm text-gray-400 leading-relaxed">
+              Maecenas mi justo, interdum at consectetur vel, tristique et arcu. Ut quis eros blandit, ultrices diam in, elementum ex.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Instagram size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Youtube size={20} />
-              </a>
+            <div className="flex space-x-3">
+              <a href="#" className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition-colors"><Facebook size={16} /></a>
+              <a href="#" className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition-colors"><Twitter size={16} /></a>
+              <a href="#" className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition-colors"><Instagram size={16} /></a>
+              <a href="#" className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition-colors"><Youtube size={16} /></a>
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* 2. Quick Links */}
           <div className="w-full">
-            <h4 className="text-white font-semibold mb-4 text-base sm:text-lg">Navigation</h4>
-            <ul className="space-y-2">
-              {navItems.map((item) => (
-                <li key={item.id}>
-                  <button
-                    onClick={() => scrollToSection(item.id)}
-                    className="hover:text-green-500 transition-colors text-left w-full text-sm sm:text-base flex items-center gap-2"
-                  >
-                    <item.icon size={16} />
-                    {item.label}
-                  </button>
-                </li>
-              ))}
+            <h4 className="text-white font-semibold mb-6 text-lg relative inline-block after:content-[''] after:absolute after:left-0 after:-bottom-2 after:w-12 after:h-0.5 after:bg-green-500">Quick Links</h4>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li><a href="/#about" className="hover:text-green-500 transition-colors flex items-center gap-2"><ArrowRight size={14} /> About Us</a></li>
+              <li><a href="/contact" className="hover:text-green-500 transition-colors flex items-center gap-2"><ArrowRight size={14} /> Contact Us</a></li>
+              <li><a href="/products" className="hover:text-green-500 transition-colors flex items-center gap-2"><ArrowRight size={14} /> Shop Now</a></li>
+              <li><a href="/privacy" className="hover:text-green-500 transition-colors flex items-center gap-2"><ArrowRight size={14} /> Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-green-500 transition-colors flex items-center gap-2"><ArrowRight size={14} /> Terms & Condition</a></li>
             </ul>
+            <h4 className="text-white font-semibold mt-8 mb-4 text-sm">Download App</h4>
+            <div className="flex gap-2">
+              <div className="w-24 h-8 bg-gray-800 rounded border border-gray-700 flex items-center justify-center text-[10px] text-gray-400 cursor-pointer hover:bg-gray-700">App Store</div>
+              <div className="w-24 h-8 bg-gray-800 rounded border border-gray-700 flex items-center justify-center text-[10px] text-gray-400 cursor-pointer hover:bg-gray-700">Google Play</div>
+            </div>
           </div>
 
-          {/* Categories */}
-          <div className="w-full">
-            <h4 className="text-white font-semibold mb-4 text-base sm:text-lg">Categories</h4>
-            {!isMounted || loading ? (
-              <ul className="space-y-2">
-                {[...Array(5)].map((_, index) => (
-                  <li key={index}>
-                    <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
-                  </li>
-                ))}
-              </ul>
-            ) : error ? (
-              <ul className="space-y-2">
-                <li className="text-red-400 text-sm">Failed to load categories</li>
-              </ul>
-            ) : (
-              <ul className="space-y-2">
-                {(categories || []).slice(0, 5).map((category) => (
-                  <li key={category._id}>
-                    <button
-                      onClick={() => handleCategoryClick(category)}
-                      className="hover:text-green-500 transition-colors text-left w-full text-sm sm:text-base"
-                    >
-                      {category.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {/* 3. Top Rated */}
 
-          {/* Contact Info */}
+
+          {/* 4. Top Selling */}
+
+
+          {/* 5. Contact & Newsletter */}
           <div className="w-full">
-            <h4 className="text-white font-semibold mb-4 text-base sm:text-lg">Contact Us</h4>
-            <ul className="space-y-4">
+            <h4 className="text-white font-semibold mb-6 text-lg relative inline-block after:content-[''] after:absolute after:left-0 after:-bottom-2 after:w-12 after:h-0.5 after:bg-green-500">Contact Us</h4>
+            <ul className="space-y-4 text-sm text-gray-400 mb-6">
               <li className="flex items-start">
-                <MapPin size={20} className="mr-2 mt-1 flex-shrink-0 text-green-500" />
-                <span className="text-sm sm:text-base">Sr. No 36/1/3, 3rd Floor Audumbar Nivya Near Canara Bank, Narhe gaon, Pune - 411041</span>
+                <MapPin size={20} className="mr-3 mt-1 flex-shrink-0 text-green-500" />
+                <span>Sr. No 36/1/3, 3rd Floor Audumbar Nivya Near Canara Bank, Narhe gaon, Pune - 411041</span>
               </li>
               <li className="flex items-center">
-                <Phone size={20} className="mr-2 flex-shrink-0 text-green-500" />
-                <span className="text-sm sm:text-base">+91 8421539304</span>
+                <Phone size={20} className="mr-3 flex-shrink-0 text-green-500" />
+                <span>+91 8421539304</span>
               </li>
               <li className="flex items-center">
-                <Mail size={20} className="mr-2 flex-shrink-0 text-green-500" />
-                <span className="text-sm sm:text-base">info@farmferry.in</span>
+                <Mail size={20} className="mr-3 flex-shrink-0 text-green-500" />
+                <span>info@farmferry.in</span>
               </li>
             </ul>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-12">
-          {/* Quick Links */}
-          <div className="w-full">
-            <h4 className="text-white font-semibold mb-4 text-base sm:text-lg">Quick Links</h4>
-            <ul className="space-y-2">
-              <li><a href="/terms" className="hover:text-green-500 transition-colors text-sm sm:text-base">Terms & Conditions</a></li>
-              <li><a href="/privacy" className="hover:text-green-500 transition-colors text-sm sm:text-base">Privacy Policy</a></li>
-              <li><a href="/refund" className="hover:text-green-500 transition-colors text-sm sm:text-base">Refund Policy</a></li>
-            </ul>
+            <h5 className="text-white font-semibold mb-3 text-sm">Subscribe Our Newsletter</h5>
+            <div className="flex">
+              <input type="email" placeholder="Enter Email" className="bg-gray-800 text-white rounded-l-md px-3 py-2 w-full focus:outline-none border border-gray-700 text-sm focus:border-green-500" />
+              <button className="bg-green-600 text-white px-3 py-2 rounded-r-md hover:bg-green-700">
+                <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className="mb-4 sm:mb-0 text-sm sm:text-base">
+            <p className="mb-4 sm:mb-0 text-sm text-gray-500">
               © {new Date().getFullYear()} FarmFerry. All rights reserved.
             </p>
+            <div className="flex gap-4">
+              <img src="/images/payment_methods.png" alt="Payments" className="h-6 object-contain opacity-50" />
+              {/* Placeholder for payment methods if needed */}
+            </div>
           </div>
         </div>
       </div>

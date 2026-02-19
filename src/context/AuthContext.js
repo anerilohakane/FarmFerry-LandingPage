@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { apiService } from '../utils/api';
 
 const AuthContext = createContext();
@@ -27,11 +27,11 @@ export const AuthProvider = ({ children }) => {
       try {
         const savedUser = localStorage.getItem('farmferry-user');
         const savedTokens = localStorage.getItem('farmferry-tokens');
-        
+
         if (savedUser && savedTokens) {
           const userData = JSON.parse(savedUser);
           const tokenData = JSON.parse(savedTokens);
-          
+
           setUser(userData);
           setTokens(tokenData);
           setIsAuthenticated(true);
@@ -51,6 +51,8 @@ export const AuthProvider = ({ children }) => {
 
   // Save user and tokens to localStorage
   useEffect(() => {
+    if (loading) return;
+
     if (user && tokens.accessToken) {
       localStorage.setItem('farmferry-user', JSON.stringify(user));
       localStorage.setItem('farmferry-tokens', JSON.stringify(tokens));
@@ -58,14 +60,16 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('farmferry-user');
       localStorage.removeItem('farmferry-tokens');
     }
-  }, [user, tokens]);
+  }, [user, tokens, loading]);
+
+
 
   // Register customer
   const register = async (userData) => {
     try {
       setLoading(true);
       const response = await apiService.registerCustomer(userData);
-      
+
       if (response.success) {
         // Registration successful, but phone verification required
         return {
@@ -93,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiService.sendPhoneVerification(phone);
-      
+
       if (response.success) {
         return {
           success: true,
@@ -118,7 +122,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiService.verifyPhoneOTP(phone, otp);
-      
+
       if (response.success) {
         // Phone verified, now user can login
         return {
@@ -144,10 +148,10 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiService.loginCustomer(credentials);
-      
+
       if (response.success) {
         const { customer, accessToken, refreshToken } = response.data;
-        
+
         // Check if phone verification is required
         if (response.data.requiresPhoneVerification) {
           return {
@@ -157,12 +161,17 @@ export const AuthProvider = ({ children }) => {
             message: response.message
           };
         }
-        
+
         // Login successful
         setUser(customer);
         setTokens({ accessToken, refreshToken });
+
+        // Synchronously save to localStorage to fail-safe race conditions
+        localStorage.setItem('farmferry-user', JSON.stringify(customer));
+        localStorage.setItem('farmferry-tokens', JSON.stringify({ accessToken, refreshToken }));
+
         setIsAuthenticated(true);
-        
+
         return {
           success: true,
           user: customer,
@@ -187,7 +196,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiService.forgotPassword(email);
-      
+
       if (response.success) {
         return {
           success: true,
@@ -212,7 +221,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiService.resetPasswordWithOTP(email, otp, password);
-      
+
       if (response.success) {
         return {
           success: true,
@@ -237,7 +246,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiService.sendLoginOtp(phone);
-      
+
       if (response.success) {
         return {
           success: true,
@@ -262,15 +271,20 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiService.loginWithPhoneOtp(phone, otp);
-      
+
       if (response.success) {
         const { customer, accessToken, refreshToken } = response.data;
-        
+
         // Login successful
         setUser(customer);
         setTokens({ accessToken, refreshToken });
+
+        // Synchronously save to localStorage
+        localStorage.setItem('farmferry-user', JSON.stringify(customer));
+        localStorage.setItem('farmferry-tokens', JSON.stringify({ accessToken, refreshToken }));
+
         setIsAuthenticated(true);
-        
+
         return {
           success: true,
           user: customer,
@@ -291,11 +305,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // Call logout API if user is authenticated
       if (isAuthenticated && tokens.accessToken) {
-        await apiService.logout();
+        await apiService.logout(tokens.accessToken);
       }
     } catch (error) {
       console.error('Logout API error:', error);
@@ -305,7 +319,19 @@ export const AuthProvider = ({ children }) => {
       setTokens({ accessToken: null, refreshToken: null });
       setIsAuthenticated(false);
     }
-  };
+  }, [isAuthenticated, tokens]);
+
+  // Handle unauthorized events (401) from API
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, [logout]);
 
   // Get current user
   const getCurrentUser = async () => {
@@ -313,9 +339,9 @@ export const AuthProvider = ({ children }) => {
       if (!tokens.accessToken) {
         throw new Error('No access token');
       }
-      
+
       const response = await apiService.getCurrentUser();
-      
+
       if (response.success) {
         setUser(response.data.user);
         return {
@@ -342,12 +368,17 @@ export const AuthProvider = ({ children }) => {
       if (!tokens.refreshToken) {
         throw new Error('No refresh token');
       }
-      
+
       const response = await apiService.refreshToken(tokens.refreshToken);
-      
+
       if (response.success) {
         const { accessToken, refreshToken } = response.data;
         setTokens({ accessToken, refreshToken });
+
+        // Synchronously save to localStorage
+        localStorage.setItem('farmferry-tokens', JSON.stringify({ accessToken, refreshToken }));
+        // Note: We don't necessarily update user here, but tokens are key
+
         return {
           success: true,
           accessToken,

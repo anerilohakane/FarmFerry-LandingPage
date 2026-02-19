@@ -90,43 +90,22 @@ const AuthModal = ({ open, onClose }) => {
     try {
       setErrors({});
       setSuccessMessage("");
+      console.log("Using useAuth to send OTP...");
 
-      const API_URL = "/api/auth/login/send-otp";
-      console.log("Fetching API URL:", API_URL);
+      const res = await sendLoginOtp(formData.phone);
+      console.log("Send OTP via context response:", res);
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phone: formData.phone,
-        }),
-      });
-
-      console.log("Fetch completed. Response object:", res);
-
-      if (!res.ok) {
-        console.error("Response not OK. Status:", res.status);
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log("Response JSON data:", data);
-
-      if (data.success) {
+      if (res.success) {
         setSuccessMessage("OTP sent successfully");
         setView("phone-otp");
         setResendTimer(30);
-        console.log("OTP sent successfully, switching to OTP view");
       } else {
-        setErrors({ general: data.message || "Failed to send OTP" });
-        console.log("Backend returned failure:", data);
+        setErrors({ general: res.message || "Failed to send OTP" });
       }
     } catch (err) {
-      console.error("OTP ERROR (fetch failed):", err);
+      console.error("OTP ERROR:", err);
       setErrors({
-        general: "Failed to fetch. Backend or CORS issue.",
+        general: "Failed to send OTP. Please try again.",
       });
     }
   };
@@ -211,49 +190,24 @@ const AuthModal = ({ open, onClose }) => {
     try {
       setErrors({});
       setSuccessMessage("");
+      console.log("Using useAuth to verify OTP...");
 
-      const API_URL = "/api/auth/login/verify-otp";
-      console.log("Calling verify-otp:", API_URL);
+      const res = await loginWithPhoneOtp(formData.phone, formData.otp);
+      console.log("Verify OTP via context response:", res);
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phone: formData.phone,
-          otp: formData.otp,
-        }),
-      });
-
-      console.log("Verify OTP response:", res);
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log("Verify OTP JSON:", data);
-
-      if (data.success) {
+      if (res.success) {
         setSuccessMessage("Login successful!");
-
-        // optional token save
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-        }
-
         setTimeout(() => {
           onClose();
           resetForm();
         }, 1000);
       } else {
-        setErrors({ general: data.message || "Invalid OTP" });
+        setErrors({ general: res.message || "Invalid OTP" });
       }
     } catch (err) {
       console.error("VERIFY OTP ERROR:", err);
       setErrors({
-        general: "Failed to verify OTP. Backend or CORS issue.",
+        general: "Failed to verify OTP. Please try again.",
       });
     }
   };
@@ -312,7 +266,7 @@ const AuthModal = ({ open, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 sm:p-6"
+        className="fixed inset-0 z-[1000] bg-black/50 flex items-center justify-center p-4 sm:p-6"
         onClick={handleClose}
       >
         <motion.div

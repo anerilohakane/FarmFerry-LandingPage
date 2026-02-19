@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Plus, MapPin, Home, Briefcase, MoreHorizontal, Edit3, Trash2, Star, CheckCircle, Loader2 } from 'lucide-react';
 import AddressForm from './AddressForm';
 import GoogleMapsPicker from './GoogleMapsPicker';
+import { apiService } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 
 const AddressList = ({ showManagementOptions = true, selectedAddress = null, onSelectAddress = null, showAddNewButton = true }) => {
   const [addresses, setAddresses] = useState([]);
@@ -14,6 +16,9 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
   const [editingAddress, setEditingAddress] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [settingDefaultId, setSettingDefaultId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState(null);
+  const { isAuthenticated } = useAuth(); // Use AuthContext for auth state
 
   const [newAddress, setNewAddress] = useState({
     type: 'home',
@@ -35,24 +40,19 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
   const fetchAddresses = async () => {
     setLoading(true);
     try {
-      const savedTokens = localStorage.getItem('farmferry-tokens');
-      const parsedTokens = savedTokens ? JSON.parse(savedTokens) : null;
-      const token = parsedTokens?.accessToken;
-
-      if (!token) {
+      if (!isAuthenticated) {
         setLoading(false);
         return;
       }
 
-      const res = await fetch(`${API_BASE}/customers/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiService.getAddresses();
 
-      const data = await res.json();
-      if (res.ok) {
-        setAddresses(data.data.customer?.addresses || []);
+      if (res.success) {
+        // Handle both response structures: direct array or nested in customer object
+        const addressData = Array.isArray(res.data) ? res.data : (res.data.customer?.addresses || []);
+        setAddresses(addressData);
       } else {
-        console.error('Error fetching addresses:', data.message);
+        console.error('Error fetching addresses:', res.message);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -63,27 +63,26 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
 
   useEffect(() => {
     fetchAddresses();
-  }, []);
+  }, [isAuthenticated]); // Re-fetch on auth change
 
-  const handleDeleteAddress = async (addressId) => {
-    if (!window.confirm('Are you sure you want to delete this address?')) return;
-    
-    setDeletingId(addressId);
+  const handleDeleteAddress = (addressId) => {
+    setAddressToDelete(addressId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteAddress = async () => {
+    if (!addressToDelete) return;
+
+    setDeletingId(addressToDelete);
     try {
-      const savedTokens = localStorage.getItem('farmferry-tokens');
-      const parsedTokens = savedTokens ? JSON.parse(savedTokens) : null;
-      const token = parsedTokens?.accessToken;
+      const res = await apiService.deleteAddress(addressToDelete);
 
-      const res = await fetch(`${API_BASE}/customers/address/${addressId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.ok) {
-        setAddresses(addresses.filter((addr) => addr._id !== addressId));
+      if (res.success) {
+        setAddresses(addresses.filter((addr) => addr._id !== addressToDelete));
+        setShowDeleteConfirm(false);
+        setAddressToDelete(null);
       } else {
-        const data = await res.json();
-        alert(data.message || 'Failed to delete address');
+        alert(res.message || 'Failed to delete address');
       }
     } catch (err) {
       console.error('Error deleting address:', err);
@@ -96,22 +95,14 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
   const handleSetDefault = async (addressId) => {
     setSettingDefaultId(addressId);
     try {
-      const savedTokens = localStorage.getItem('farmferry-tokens');
-      const parsedTokens = savedTokens ? JSON.parse(savedTokens) : null;
-      const token = parsedTokens?.accessToken;
+      const res = await apiService.setDefaultAddress(addressId);
 
-      const res = await fetch(`${API_BASE}/customers/address/${addressId}/default`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.ok) {
+      if (res.success) {
         setAddresses((prev) =>
           prev.map((addr) => ({ ...addr, isDefault: addr._id === addressId }))
         );
       } else {
-        const data = await res.json();
-        alert(data.message || 'Failed to set default address');
+        alert(res.message || 'Failed to set default address');
       }
     } catch (err) {
       console.error('Error setting default:', err);
@@ -213,21 +204,19 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
           {/* <GoogleMapsPicker
             onLocationSelect={(locationData) => console.log('Selected Location:', locationData)} // Handle selection as needed
           /> */}
-          
+
           <div className="grid gap-4">
             {addresses.map((address) => (
               <div
                 key={address._id}
                 onClick={() => onSelectAddress && onSelectAddress(address)}
-                className={`border rounded-xl p-5 transition-all cursor-pointer hover:shadow-md ${
-                  address.isDefault
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                } ${
-                  selectedAddress && selectedAddress._id === address._id 
-                    ? 'border-green-500 bg-green-50 ring-2 ring-green-100 shadow-md' 
+                className={`border rounded-xl p-5 transition-all cursor-pointer hover:shadow-md ${address.isDefault
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                  } ${selectedAddress && selectedAddress._id === address._id
+                    ? 'border-green-500 bg-green-50 ring-2 ring-green-100 shadow-md'
                     : ''
-                }`}
+                  }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -280,7 +269,7 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
                           )}
                         </button>
                       )}
-                      
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -291,7 +280,7 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
                       >
                         <Edit3 size={16} />
                       </button>
-                      
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -315,7 +304,52 @@ const AddressList = ({ showManagementOptions = true, selectedAddress = null, onS
           </div>
         </div>
       )}
-    </div>
+
+
+      {/* Delete Confirmation Modal */}
+      {
+        showDeleteConfirm && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300">
+            <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center transform scale-100 animate-in fade-in zoom-in duration-200 max-w-sm w-full mx-4">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-5">
+                <div className="bg-red-100 rounded-full p-3">
+                  <Trash2 size={24} className="text-red-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2 text-center">Delete Address?</h3>
+              <p className="text-gray-500 text-center mb-8 text-sm leading-relaxed">
+                Are you sure you want to remove this address? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setAddressToDelete(null);
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteAddress}
+                  disabled={deletingId === addressToDelete}
+                  className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 shadow-sm hover:shadow-red-200 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  {deletingId === addressToDelete ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Deleting</span>
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 };
 

@@ -1,254 +1,206 @@
-// 'use client'
-
-// import { Truck, Calendar, BadgePercent, DownloadCloud, ShoppingCart } from 'lucide-react';
-
-// export default function PopularProducts() {
-//   return (
-//     <section className="pt-10 pb-2 px-4 sm:px-5 bg-grey-100">
-//       <div className="container mx-auto max-w-7xl bg-white rounded-lg shadow-md p-6 sm:p-8" id='about'>
-//         <h2 className="text-2xl sm:text-3xl font-bold text-center text-green-800 mb-8">Fresh Farm Deliveries Made Simple</h2>
-        
-//         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-center">
-//           {/* Left side - Text content with Lucide icons */}
-//           <div className="space-y-6">
-//             <p className="text-base sm:text-lg text-gray-800">
-//               <span className="font-semibold">Lightning-fast delivery to your door.</span>
-//             </p>
-
-//             <p className="text-gray-600 text-sm sm:text-base">
-//               We deliver fresh vegetables, dry fruits, leafy greens and other essentials directly from local farms.
-//             </p>
-
-//             <div className="space-y-4">
-//               <div className="flex items-start gap-4">
-//                 <DownloadCloud className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-//                 <div>
-//                   <h3 className="font-semibold text-green-800">Easy App Download</h3>
-//                   <p className="text-gray-600 text-sm">
-//                     Download our app and start shopping fresh in just a few taps.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <div className="flex items-start gap-4">
-//                 <ShoppingCart className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-//                 <div>
-//                   <h3 className="font-semibold text-green-800">Seamless Ordering</h3>
-//                   <p className="text-gray-600 text-sm">
-//                     Browse, select, and place your order effortlessly anytime, anywhere.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <div className="flex items-start gap-4">
-//                 <Truck className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-//                 <div>
-//                   <h3 className="font-semibold text-green-800">Fast & Reliable Delivery</h3>
-//                   <p className="text-gray-600 text-sm">
-//                     Your orders delivered fresh and on time, right to your doorstep.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <div className="flex items-start gap-4">
-//                 <BadgePercent className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-//                 <div>
-//                   <h3 className="font-semibold text-green-800">Recurring Order Subscription</h3>
-//                   <p className="text-gray-600 text-sm">
-//                     Get rewarded for consistency — enjoy amazing savings on every recurring order!  
-//                   </p>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Right side - Car-fit images with overlay text */}
-//           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-//             <div className="relative min-w-[120px] h-32 sm:h-40 rounded-xl overflow-hidden group">
-//               <img 
-//                 src="/images/explore/fresh-vegetables.png" 
-//                 alt="Fresh Vegetables" 
-//                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-//               />
-//               <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-4 text-center">
-//                 <h3 className="font-bold text-white text-base sm:text-lg">Fresh Vegetables</h3>
-//                 <p className="text-white/90 text-sm mt-1">Harvested Daily</p>
-//               </div>
-//             </div>
-            
-//             <div className="relative min-w-[120px] h-32 sm:h-40 rounded-xl overflow-hidden group">
-//               <img 
-//                 src="/images/explore/dry-fruits1.png" 
-//                 alt="Dry Fruits" 
-//                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-//               />
-//               <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-4 text-center">
-//                 <h3 className="font-bold text-white text-base sm:text-lg">Dry Fruits</h3>
-//                 <p className="text-white/90 text-sm mt-1">Premium Quality</p>
-//               </div>
-//             </div>
-            
-//             <div className="relative min-w-[120px] h-32 sm:h-40 rounded-xl overflow-hidden group">
-//               <img 
-//                 src="/images/explore/leafy-green.png" 
-//                 alt="Leafy Greens" 
-//                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-//               />
-//               <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-4 text-center">
-//                 <h3 className="font-bold text-white text-base sm:text-lg">Leafy Greens</h3>
-//                 <p className="text-white/90 text-sm mt-1">Nutrient Rich</p>
-//               </div>
-//             </div>
-            
-//             <div className="relative min-w-[120px] h-32 sm:h-40 rounded-xl overflow-hidden group">
-//               <img 
-//                 src="/images/explore/farm-fresh.png" 
-//                 alt="Farm Fresh" 
-//                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-//               />
-//               <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-4 text-center">
-//                 <h3 className="font-bold text-white text-base sm:text-lg">Farm Fresh</h3>
-//                 <p className="text-white/90 text-sm mt-1">Quality Assured</p>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </section>
-//   );
-// }
-
-'use client'
-
-import { Truck, DownloadCloud, BadgePercent, ShoppingCart } from 'lucide-react';
+'use client';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { ShoppingCart, Star, Heart } from 'lucide-react';
+import { apiService } from '../../utils/api';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function PopularProducts() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
+  const [wishlist, setWishlist] = useState(new Set());
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (isAuthenticated && user?._id) {
+        try {
+          const response = await apiService.getWishlist(user._id);
+          if (response.success && response.data?.items) {
+            const ids = new Set(response.data.items.map(item =>
+              typeof item.product === 'object' ? item.product._id : item.product
+            ));
+            setWishlist(ids);
+          }
+        } catch (error) {
+          console.error("Failed to fetch wishlist", error);
+        }
+      } else {
+        setWishlist(new Set());
+      }
+    };
+
+    fetchWishlist();
+
+    const handleWishlistUpdate = () => fetchWishlist();
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+
+    return () => {
+      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
+    };
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Fetch products
+        const response = await apiService.getAllProducts({ limit: 8 });
+        if (response.success && response.data?.products) {
+          setProducts(response.data.products);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const handleToggleWishlist = async (e, product) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      // Trigger login modal
+      window.dispatchEvent(new Event('openAuthModal'));
+      return;
+    }
+
+    if (!user || !user._id) {
+      console.error("User object missing ID:", user);
+      alert("User session invalid. Please relogin.");
+      return;
+    }
+
+    const productId = product._id;
+    const isInWishlist = wishlist.has(productId);
+
+    try {
+      let response;
+      if (isInWishlist) {
+        response = await apiService.removeFromWishlist(user._id, productId);
+      } else {
+        response = await apiService.addToWishlist(user._id, productId);
+      }
+
+      console.log("Wishlist toggle response:", response);
+
+      if (response && response.success) {
+        setWishlist(prev => {
+          const newSet = new Set(prev);
+          if (isInWishlist) newSet.delete(productId);
+          else newSet.add(productId);
+          return newSet;
+        });
+        window.dispatchEvent(new Event('wishlistUpdated'));
+        // alert(isInWishlist ? "Removed from wishlist" : "Added to wishlist");
+      } else {
+        alert(`Failed to update wishlist: ${response?.message || response?.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+      alert(`Error updating wishlist: ${error.message}`);
+    }
+  };
+
+  const handleAddToCart = (e, product) => {
+    e.stopPropagation();
+    addToCart(product);
+  };
+
+  if (loading) return (
+    <div className="py-12 max-w-7xl mx-auto px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-80 bg-gray-100 rounded-2xl animate-pulse"></div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <section className="px-4 sm:px-6"> {/* Removed py-12 sm:py-16 */}
-      {/* Custom width between 6xl and 7xl */}
-      <div className="mx-auto max-w-6.5xl bg-green-50 rounded-3xl p-8 sm:p-12">
-        {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-            Fresh Farm Deliveries Made Simple
-          </h2>
-          <p className="text-gray-900 font-semibold text-lg mb-2">
-            Lightning-fast delivery to your door
-          </p>
-          <p className="text-gray-600 text-base">
-            We deliver fresh vegetables, dry fruits, leafy greens and other essentials directly from local farms.
-          </p>
+    <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-between items-end mb-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Super Flash Sale</h2>
+          <p className="text-gray-500 mt-1">Get the best deals on our premium products</p>
         </div>
+        <button
+          onClick={() => router.push('/products')}
+          className="text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-6 py-2 rounded-full transition-colors shadow-lg shadow-green-200"
+        >
+          View All
+        </button>
+      </div>
 
-        {/* 4 Icon Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* Easy App Download */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">
-                <DownloadCloud className="w-8 h-8 text-green-600" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        {products.map((product) => (
+          <div key={product._id} className="bg-white rounded-3xl border border-gray-100 hover:border-gray-300 hover:shadow-xl transition-all duration-300 group overflow-hidden relative">
+            {/* Wishlist/QuickView Buttons overlay */}
+            <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+              <button
+                onClick={(e) => handleToggleWishlist(e, product)}
+                className={`p-2 bg-white rounded-full shadow-md transition-colors ${wishlist.has(product._id) ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'}`}
+              >
+                <Heart size={18} fill={wishlist.has(product._id) ? "currentColor" : "none"} />
+              </button>
+
+            </div>
+
+            {/* Product Image */}
+            <div className="relative h-60 w-full bg-[#FAFAFA] cursor-pointer flex items-center justify-center" onClick={() => router.push(`/product/${product._id}`)}>
+              <Image
+                src={product.images?.[0]?.url || '/images/explore/tomato.png'}
+                alt={product.name}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              {product.discountedPrice < product.price && (
+                <span className="absolute top-4 left-4 bg-[#FF7E00] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  Sale!
+                </span>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="p-5">
+              <div className="text-[11px] text-gray-400 mb-1 uppercase tracking-wide">{product.categoryId?.name || 'Organic'}</div>
+              <h3 className="font-bold text-gray-800 text-base mb-2 truncate cursor-pointer hover:text-green-600 transition-colors" onClick={() => router.push(`/product/${product._id}`)}>
+                {product.name}
+              </h3>
+
+              {/* Rating */}
+              <div className="flex items-center gap-1 mb-3">
+                <div className="flex bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold items-center gap-1">
+                  <span>{product.averageRating?.toFixed(1) || '0.0'}</span>
+                  <Star size={10} fill="currentColor" />
+                </div>
+                <span className="text-xs text-gray-500">({product.totalReviews || 0} reviews)</span>
+              </div>
+
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+                <div>
+                  <span className="text-green-600 font-bold text-lg">
+                    ₹{product.discountedPrice || product.price}
+                    {product.unit && <span className="text-sm font-normal text-gray-500 ml-1">/ {product.unit}</span>}
+                  </span>
+                  {product.discountedPrice < product.price && (
+                    <span className="text-gray-400 text-xs line-through ml-2">₹{product.price}</span>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => handleAddToCart(e, product)}
+                  className="w-8 h-8 flex items-center justify-center bg-gray-100 text-green-600 rounded-full hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                >
+                  <ShoppingCart size={16} />
+                </button>
               </div>
             </div>
-            <h3 className="font-bold text-gray-900 text-base mb-2">Easy App Download</h3>
-            <p className="text-gray-600 text-sm">
-              Download our app and start shopping fresh in just a few taps
-            </p>
           </div>
-
-          {/* Seamless Ordering */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">
-                <ShoppingCart className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-            <h3 className="font-bold text-gray-900 text-base mb-2">Seamless Ordering</h3>
-            <p className="text-gray-600 text-sm">
-              Browse, select, and place your order effortlessly anytime, anywhere.
-            </p>
-          </div>
-
-          {/* Fast & Reliable Delivery */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">
-                <Truck className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-            <h3 className="font-bold text-gray-900 text-base mb-2">Fast & Reliable Delivery</h3>
-            <p className="text-gray-600 text-sm">
-              Your orders delivered fresh and on time, right to your doorstep.
-            </p>
-          </div>
-
-          {/* Recurring Order Subscription */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">
-                <BadgePercent className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-            <h3 className="font-bold text-gray-900 text-base mb-2">Recurring Order Subscription</h3>
-            <p className="text-gray-600 text-sm">
-              Get rewarded for consistency — enjoy amazing savings on every recurring order!
-            </p>
-          </div>
-        </div>
-
-        {/* 4 Image Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Fresh Vegetables */}
-          <div className="relative h-56 rounded-2xl overflow-hidden group cursor-pointer">
-            <img
-              src="/images/explore/fresh-vegetables.png"
-              alt="Fresh Vegetables"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col items-center justify-end p-6 text-center">
-              <h3 className="font-bold text-white text-lg mb-1">Fresh Vegetables</h3>
-              <p className="text-white/90 text-sm">Harvested Daily</p>
-            </div>
-          </div>
-
-          {/* Dry Fruits */}
-          <div className="relative h-56 rounded-2xl overflow-hidden group cursor-pointer">
-            <img
-              src="/images/explore/dry-fruits1.png"
-              alt="Dry Fruits"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col items-center justify-end p-6 text-center">
-              <h3 className="font-bold text-white text-lg mb-1">Dry Fruits</h3>
-              <p className="text-white/90 text-sm">Premium Quality</p>
-            </div>
-          </div>
-
-          {/* Farm Fresh */}
-          <div className="relative h-56 rounded-2xl overflow-hidden group cursor-pointer">
-            <img
-              src="/images/explore/farm-fresh.png"
-              alt="Farm Fresh"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col items-center justify-end p-6 text-center">
-              <h3 className="font-bold text-white text-lg mb-1">Farm Fresh</h3>
-              <p className="text-white/90 text-sm">Quality Assured</p>
-            </div>
-          </div>
-
-          {/* Leafy Greens */}
-          <div className="relative h-56 rounded-2xl overflow-hidden group cursor-pointer">
-            <img
-              src="/images/explore/leafy-green.png"
-              alt="Leafy Greens"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col items-center justify-end p-6 text-center">
-              <h3 className="font-bold text-white text-lg mb-1">Leafy Greens</h3>
-              <p className="text-white/90 text-sm">Nutrient Rich</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </section>
   );

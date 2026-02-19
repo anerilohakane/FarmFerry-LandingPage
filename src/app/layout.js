@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Quicksand, Cookie } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -6,15 +6,16 @@ import { CartProvider } from "../context/CartContext";
 import { AuthProvider } from "../context/AuthContext";
 import Script from "next/script";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const quicksand = Quicksand({
   subsets: ["latin"],
+  variable: "--font-quicksand",
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const cookie = Cookie({
   subsets: ["latin"],
+  weight: "400",
+  variable: "--font-cookie",
   display: "swap",
 });
 
@@ -78,7 +79,7 @@ export default function RootLayout({ children }) {
           strategy="beforeInteractive"
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${quicksand.variable} ${cookie.variable} font-sans antialiased text-gray-800`}>
         <AuthProvider>
           <CartProvider>
             <Header />

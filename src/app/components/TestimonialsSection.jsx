@@ -9,7 +9,7 @@
 //         <h2 className="text-2xl sm:text-3xl font-bold text-center text-green-800 mb-12">
 //           Farm to Home, Every Day Online Groceries Delivery
 //         </h2>
-        
+
 //         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 //           {/* Farm Fresh Card */}
 //           <div className="relative min-w-[150px] h-48 sm:h-64 rounded-xl overflow-hidden group">
@@ -28,7 +28,7 @@
 //               </p>
 //             </div>
 //           </div>
-          
+
 //           {/* Quality Tested Card */}
 //           <div className="relative min-w-[150px] h-48 sm:h-64 rounded-xl overflow-hidden group">
 //             <img 
@@ -46,7 +46,7 @@
 //               </p>
 //             </div>
 //           </div>
-          
+
 //           {/* Home Delivery Card */}
 //           <div className="relative min-w-[150px] h-48 sm:h-64 rounded-xl overflow-hidden group">
 //             <img 
@@ -94,10 +94,10 @@ export default function FarmToHome() {
           {/* Farm Fresh Products Card */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="h-48 overflow-hidden">
-              <img 
-                src="/images/1.png" 
-                alt="Farm Fresh Products" 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+              <img
+                src="/images/1.png"
+                alt="Farm Fresh Products"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="p-6 text-center">
@@ -107,14 +107,14 @@ export default function FarmToHome() {
               </p>
             </div>
           </div>
-          
+
           {/* Quality Tested Card */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="h-48 overflow-hidden">
-              <img 
-                src="/images/2.png" 
-                alt="Quality Tested" 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+              <img
+                src="/images/2.png"
+                alt="Quality Tested"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="p-6 text-center">
@@ -124,14 +124,14 @@ export default function FarmToHome() {
               </p>
             </div>
           </div>
-          
+
           {/* Home Delivery Card */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="h-48 overflow-hidden">
-              <img 
-                src="/images/3.png" 
-                alt="Home Delivery" 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+              <img
+                src="/images/3.png"
+                alt="Home Delivery"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="p-6 text-center">
@@ -158,10 +158,10 @@ export default function FarmToHome() {
           {/* Ethically Sourced Produce */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="h-48 overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=400&h=300&fit=crop" 
-                alt="Ethically Sourced Produce" 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+              <img
+                src="/images/4.png"
+                alt="Ethically Sourced Produce"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="p-6 text-center">
@@ -175,10 +175,10 @@ export default function FarmToHome() {
           {/* Sustainable Farming Partners */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="h-48 overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400&h=300&fit=crop" 
-                alt="Sustainable Farming Partners" 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+              <img
+                src="/images/4.png"
+                alt="Sustainable Farming Partners"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="p-6 text-center">
@@ -193,9 +193,9 @@ export default function FarmToHome() {
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="h-48 overflow-hidden">
               <img
-              src="/images/4.png" 
-                alt="Packed for You" 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+                src="/images/4.png"
+                alt="Packed for You"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="p-6 text-center">
@@ -209,10 +209,10 @@ export default function FarmToHome() {
           {/* Fair Pricing for Farmers */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="h-48 overflow-hidden">
-              <img 
-                 src="/images/5.png"
-                alt="Fair Pricing for Farmers" 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+              <img
+                src="/images/5.png"
+                alt="Fair Pricing for Farmers"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="p-6 text-center">
