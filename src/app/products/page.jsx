@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -171,7 +171,7 @@ const PriceRadio = ({ label, checked, onChange }) => (
 
 
 
-export default function ShopPage() {
+function ShopContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
@@ -536,3 +536,15 @@ const CheckIcon = () => (
     <polyline points="20 6 9 17 4 12"></polyline>
   </svg>
 );
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white pt-36 pb-12 flex justify-center">
+        <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
+  );
+}

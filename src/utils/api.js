@@ -74,10 +74,15 @@ class ApiService {
                   return this.request(endpoint, options, true);
                 }
               } else {
-                console.error('Token refresh failed with status:', refreshResponse.status);
+                console.warn('Token refresh failed with status:', refreshResponse.status);
+                // Clear tokens immediately to prevent repeated failed requests
+                localStorage.removeItem('farmferry-tokens');
+                localStorage.removeItem('farmferry-user');
               }
             } catch (refreshErr) {
-              console.error('Auto-refresh failed:', refreshErr);
+              console.warn('Auto-refresh failed:', refreshErr);
+              localStorage.removeItem('farmferry-tokens');
+              localStorage.removeItem('farmferry-user');
             }
           }
 

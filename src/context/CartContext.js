@@ -261,6 +261,7 @@ export const CartProvider = ({ children }) => {
     };
 
     manageCartState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   // Save guest cart to localStorage
